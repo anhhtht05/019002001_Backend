@@ -1,4 +1,4 @@
-package com.cns.plugin;
+package com.cns.plugin3d;
 
 public class LicenseServiceTest {
 }
