@@ -1,0 +1,54 @@
+# Maven build
+/target/
+!.mvn/wrapper/maven-wrapper.jar
+
+# Maven Wrapper
+.mvn/wrapper/maven-wrapper.properties
+.mvn/wrapper/maven-wrapper-downloader.jar
+
+# IDEs
+.idea/
+*.iml
+*.ipr
+*.iws
+out/
+
+# Eclipse
+.project
+.classpath
+.settings/
+bin/
+
+# VS Code
+.vscode/
+
+# OS/system files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Build artifacts
+*.class
+*.jar
+*.war
+*.ear
+
+# Checkstyle / Reports
+/target/site/
+checkstyle-result.xml
+
+# Spring Boot config
+application-local.yml
+application-dev.yml
+
+# Test coverage / reports
+/target/test-classes/
+*.exec
+*.ec
+jacoco.exec
+
+# Temp files
+*.swp
+*.swo
