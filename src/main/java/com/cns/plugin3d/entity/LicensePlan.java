@@ -1,41 +1,35 @@
 package com.cns.plugin3d.entity;
 
-import com.cns.plugin3d.enums.UserRole;
+import com.cns.plugin3d.enums.ServiceType;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Entity
-@Table(name = "users")
-public class User {
+@Table(name = "license_plans")
+public class LicensePlan {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, unique = true)
-    private String username;
+    @ManyToOne
+    @JoinColumn(name = "license_id")
+    private License license;
 
     @Column(nullable = false)
-    private String password;
+    private String name;
 
-    @Column(nullable = false, unique = true)
-    private String email;
+    private Integer durationDays;
+    private Integer maxUsage;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
-    private UserRole role = UserRole.END_USER;
+    private ServiceType serviceType;
 
     @Column(name = "created_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
     @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<License> licenses;
-
-    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL)
-    private List<Model> models;
 
 }
