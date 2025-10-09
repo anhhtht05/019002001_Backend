@@ -1,4 +1,18 @@
 package com.cns.plugin3d.repository;
 
-public class UserRepository {
+
+import com.cns.plugin3d.entity.User;
+import com.cns.plugin3d.enums.RoleType;
+import com.cns.plugin3d.enums.StateType;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.util.Optional;
+
+public interface UserRepository extends JpaRepository<User, Long> {
+    Optional<User> findByEmail(String email);
+    Page<User> findByState(StateType state, Pageable pageable);
+    Page<User> findByRole(RoleType roleType, Pageable pageable);
+    Page<User> findByRoleAndState(RoleType roleType, StateType state, Pageable pageable);
 }

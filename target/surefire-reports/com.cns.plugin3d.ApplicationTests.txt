@@ -1,0 +1,4 @@
+-------------------------------------------------------------------------------
+Test set: com.cns.plugin3d.ApplicationTests
+-------------------------------------------------------------------------------
+Tests run: 1, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 2.255 s -- in com.cns.plugin3d.ApplicationTests
