@@ -11,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.time.LocalDateTime;
 import java.util.Collection;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -19,8 +20,8 @@ import java.util.List;
 public class User implements UserDetails {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue(strategy = GenerationType.AUTO)
+    private UUID id;
 
     @Column(nullable = false, length = 50)
     private String name;
@@ -33,7 +34,7 @@ public class User implements UserDetails {
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
-    private RoleType role = RoleType.ROLE_USER;
+    private RoleType role = RoleType.ROLE_ADMIN;
 
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)

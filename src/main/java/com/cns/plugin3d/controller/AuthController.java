@@ -26,10 +26,10 @@ public class AuthController {
         return authService.register(request);
     }
 
-    @PostMapping("/refresh")
-    public LoginResponse refresh(@RequestBody RefreshRequest request) {
-        return authService.refreshToken(request);
-    }
+//    @PostMapping("/refresh")
+//    public LoginResponse refresh(@RequestBody RefreshRequest request) {
+//        return authService.refreshToken(request);
+//    }
 
     @GetMapping("/me")
     public UserDTO me(@RequestHeader("Authorization") String authHeader) {

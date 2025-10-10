@@ -1,11 +1,10 @@
 package com.cns.plugin3d.exception;
 
-import jakarta.security.auth.message.AuthException;
+import com.cns.plugin3d.dto.DeviceRegisterResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.ResponseStatus;
 
 import java.time.Instant;
 import java.util.HashMap;
@@ -28,6 +27,17 @@ public class GlobalExceptionHandler {
                 "timestamp", Instant.now().toString()
         );
         return new ResponseEntity<>(body, status);
+    }
+
+
+    @ExceptionHandler(DeviceException.class)
+    public ResponseEntity<DeviceRegisterResponse<?>> handleDeviceException(DeviceException ex) {
+        DeviceRegisterResponse<?> response = DeviceRegisterResponse.builder()
+                .success(false)
+                .error(new DeviceRegisterResponse.ApiError(ex.getCode(), ex.getMessage(), ex.getDetails()))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
     @ExceptionHandler(CustomException.class)
