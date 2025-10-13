@@ -42,7 +42,7 @@ public class AuthService {
     private final HttpServletRequest request;
 
 
-    private final long ACCESS_TOKEN_EXP = 24 * 3600;
+    private final long ACCESS_TOKEN_EXP = 60;
     private final long REFRESH_TOKEN_EXP = 7 * 24 * 3600;
 
     public LoginResponse login(LoginRequest loginRequest) {
@@ -77,7 +77,7 @@ public class AuthService {
         }
     }
     public LoginResponse refreshToken(RefreshRequest request) {
-        String token = request.getRefresh_token();
+        String token = request.getRefreshToken();
 
         if (!jwtUtil.validateToken(token)) {
             throw new AuthExceptions.TokenExpiredException("Refresh token expired or invalid");
@@ -88,7 +88,7 @@ public class AuthService {
 
         User user = userRefreshTokenRepository.findUserByRefreshToken(refreshToken.getId())
                 .orElseThrow(() -> new AuthExceptions.UnauthorizedException("Token not linked to any user"));
-
+        System.out.println("User::::" + user);
         String newAccess = jwtUtil.generateToken(user.getEmail(), user.getRole().name(), ACCESS_TOKEN_EXP);
 
         return new LoginResponse(

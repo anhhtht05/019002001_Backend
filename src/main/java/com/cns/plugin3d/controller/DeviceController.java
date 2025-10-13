@@ -28,8 +28,11 @@ public class DeviceController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public PagedResponse<DeviceResponse> getLicensePlans(
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer limit
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(name = "device_type", required = false) String deviceType,
+            @RequestParam(name = "hardware", required = false) String hardware,
+            @RequestParam(name = "model", required = false) String model
     ) {
-        return deviceService.getDevice(page, limit);
+        return deviceService.getDevice(page, limit, deviceType, hardware, model);
     }
 }

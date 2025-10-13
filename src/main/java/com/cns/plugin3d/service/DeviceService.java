@@ -113,7 +113,7 @@ public class DeviceService {
 
 
     public PagedResponse<DeviceResponse> getDevice(
-            Integer page, Integer limit) {
+            Integer page, Integer limit, String deviceType, String hardware, String model) {
 
         int pageIndex = (page != null && page > 0) ? page - 1 : 0;
         int pageSize = (limit != null && limit > 0) ? limit : 20;
@@ -121,7 +121,34 @@ public class DeviceService {
 
         Page<Device> resultPage;
 
-        resultPage = deviceRepository.findAll(pageable);
+        if (deviceType != null && hardware != null && model != null) {
+            resultPage = deviceRepository.findByDeviceTypeAndHardwareVersionAndModel(
+                    deviceType, hardware, model, pageable);
+
+        } else if (deviceType != null && hardware != null) {
+            resultPage = deviceRepository.findByDeviceTypeAndHardwareVersion(
+                    deviceType, hardware, pageable);
+
+        } else if (deviceType != null && model != null) {
+            resultPage = deviceRepository.findByDeviceTypeAndModel(
+                    deviceType, model, pageable);
+
+        } else if (hardware != null && model != null) {
+            resultPage = deviceRepository.findByHardwareVersionAndModel(
+                    hardware, model, pageable);
+
+        } else if (deviceType != null) {
+            resultPage = deviceRepository.findByDeviceType(deviceType, pageable);
+
+        } else if (hardware != null) {
+            resultPage = deviceRepository.findByHardwareVersion(hardware, pageable);
+
+        } else if (model != null) {
+            resultPage = deviceRepository.findByModel(model, pageable);
+
+        } else {
+            resultPage = deviceRepository.findAll(pageable);
+        }
 
         return PagedResponseHelper.build(resultPage, device -> {
             DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
