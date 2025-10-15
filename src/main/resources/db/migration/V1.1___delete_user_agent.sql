@@ -1,0 +1,2 @@
+ALTER TABLE firmware_download_history
+DROP COLUMN user_agent;

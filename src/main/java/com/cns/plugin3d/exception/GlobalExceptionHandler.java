@@ -1,6 +1,7 @@
 package com.cns.plugin3d.exception;
 
 import com.cns.plugin3d.dto.DeviceRegisterResponse;
+import com.cns.plugin3d.dto.FirmwareResponse;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
@@ -27,6 +28,17 @@ public class GlobalExceptionHandler {
                 "timestamp", Instant.now().toString()
         );
         return new ResponseEntity<>(body, status);
+    }
+
+
+    @ExceptionHandler(FirmwareException.class)
+    public ResponseEntity<FirmwareResponse<?>> handleFirmwareException(FirmwareException ex) {
+        FirmwareResponse<?> response = FirmwareResponse.builder()
+                .success(false)
+                .error(new FirmwareResponse.ApiError(ex.getCode(), ex.getMessage(), ex.getDetails()))
+                .build();
+
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
     }
 
 
@@ -70,5 +82,7 @@ public class GlobalExceptionHandler {
     public ResponseEntity<Map<String, Object>> handleAll(Exception ex) {
         return buildResponse("ERROR", ex.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
     }
+
+
 }
 

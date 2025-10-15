@@ -33,7 +33,7 @@ public class FirmwareDownloadHistory {
 
 //    @Column(name = "ip_address", columnDefinition = "inet")
 //    private String ipAddress;
-
-    @Column(name = "user_agent", columnDefinition = "text")
-    private String userAgent;
+//
+//    @Column(name = "user_agent", columnDefinition = "text")
+//    private String userAgent;
 }
