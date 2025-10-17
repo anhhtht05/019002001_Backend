@@ -19,6 +19,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -57,7 +58,7 @@ public class UserService {
         );
     }
 
-    public UserDetailResponse updateUser(Long userId, UpdateUserStateRequest request) {
+    public UserDetailResponse updateUser(UUID userId, UpdateUserStateRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("USER_NOT_FOUND", HttpStatus.NOT_FOUND));
 

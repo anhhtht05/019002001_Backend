@@ -28,7 +28,8 @@ public class DeviceService {
     private final DeviceStatusHistoryRepository deviceStatusHistoryRepository;
 
     @Transactional
-    public DeviceRegisterResponse<DeviceRegisterDetailResponse> register(DeviceRegisterRequest request) {
+    public DeviceRegisterResponse<DeviceRegisterDetailResponse>
+    register(DeviceRegisterRequest request) {
 
         deviceRepository.findByDeviceId(request.getDeviceId())
                 .ifPresent(d -> {
@@ -169,5 +170,42 @@ public class DeviceService {
 
         });
 
+    }
+
+
+    public DeviceRegisterResponse<DeviceResponse> updateDevice(DeviceUpdateRequest request) {
+        Device device = deviceRepository.findByDeviceId(request.getDeviceId())
+                .orElseThrow(() -> new RuntimeException("Device not found with ID: " + request.getDeviceId()));
+
+        device.setDeviceName(request.getDeviceName());
+        device.setDeviceType(request.getDeviceType());
+        device.setHardwareVersion(request.getHardwareVersion());
+        device.setSerialNumber(request.getSerialNumber());
+        device.setMacAddress(request.getMacAddress());
+        device.setManufacturer(request.getManufacturer());
+        device.setModel(request.getModel());
+        device.setUpdatedAt(LocalDateTime.now());
+        DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
+                .findLatestByDeviceIdNative(device.getId());
+        latestStatus.setStatus(request.getStatus());
+
+        Device deviceUpdate = deviceRepository.save(device);
+
+        DeviceResponse data = DeviceResponse.builder()
+                .deviceId(deviceUpdate.getDeviceId())
+                .deviceName(deviceUpdate.getDeviceName())
+                .deviceType(deviceUpdate.getDeviceType())
+                .hardwareVersion(deviceUpdate.getHardwareVersion())
+                .serialNumber(deviceUpdate.getSerialNumber())
+                .macAddress(deviceUpdate.getMacAddress())
+                .manufacturer(deviceUpdate.getManufacturer())
+                .model(deviceUpdate.getModel())
+                .status(latestStatus != null ? latestStatus.getStatus() : StatusType.ERROR)
+                .build();
+    return DeviceRegisterResponse.<DeviceResponse>builder()
+                .success(true)
+                .data(data)
+                .message("Device updated successfully")
+                .build();
     }
 }

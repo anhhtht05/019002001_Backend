@@ -65,8 +65,6 @@ public class S3Service {
 
         } catch (IOException e) {
             throw new RuntimeException("Error reading file bytes", e);
-        } catch (S3Exception e) {
-            throw e;
         }
     }
 

@@ -42,7 +42,7 @@ public class AuthService {
     private final HttpServletRequest request;
 
 
-    private final long ACCESS_TOKEN_EXP = 60;
+    private final long ACCESS_TOKEN_EXP = 24 * 3600;
     private final long REFRESH_TOKEN_EXP = 7 * 24 * 3600;
 
     public LoginResponse login(LoginRequest loginRequest) {
@@ -69,7 +69,7 @@ public class AuthService {
                     accessToken,
                     refreshTokenStr,
                     ACCESS_TOKEN_EXP,
-                    new UserDTO(user.getId(), user.getRole().name(), user.getEmail())
+                    new UserDTO(user.getId(), user.getRole().name(), user.getName(), user.getEmail())
             );
 
         } catch (BadCredentialsException e) {
@@ -90,19 +90,18 @@ public class AuthService {
                 .orElseThrow(() -> new AuthExceptions.UnauthorizedException("Token not linked to any user"));
         System.out.println("User::::" + user);
         String newAccess = jwtUtil.generateToken(user.getEmail(), user.getRole().name(), ACCESS_TOKEN_EXP);
-
         return new LoginResponse(
                 newAccess,
                 token,
                 ACCESS_TOKEN_EXP,
-                new UserDTO(user.getId(), user.getRole().name(), user.getEmail())
+                new UserDTO(user.getId(), user.getRole().name(), user.getName(), user.getEmail())
         );
     }
 
     public UserDTO getMe(String email) {
         User user = userRepository.findByEmail(email)
                 .orElseThrow(() -> new AuthExceptions.UnauthorizedException("User not found"));
-        return new UserDTO(user.getId(), user.getRole().name(), user.getEmail());
+        return new UserDTO(user.getId(), user.getRole().name(), user.getName(), user.getEmail());
     }
 
     public LoginResponse register(RegisterRequest request) {
@@ -129,7 +128,7 @@ public class AuthService {
                 accessToken,
                 refreshTokenStr,
                 ACCESS_TOKEN_EXP,
-                new UserDTO(newUser.getId(), newUser.getRole().name(), newUser.getEmail())
+                new UserDTO(newUser.getId(), newUser.getRole().name(), newUser.getName(), newUser.getEmail())
         );
     }
     @Transactional

@@ -6,6 +6,8 @@ import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.List;
+
 @Data
 public class FirmwareUploadRequest {
 
@@ -18,6 +20,12 @@ public class FirmwareUploadRequest {
 
     @NotBlank(message = "Description is required")
     private String description;
+
+    @NotNull(message = "Model compatibility is required")
+    private List<@NotBlank String> modelCompat;
+
+    @NotNull(message = "Hardware compatibility is required")
+    private List<@NotBlank String> hardwareCompat;
 
     @NotBlank(message = "File is required")
     private MultipartFile file;

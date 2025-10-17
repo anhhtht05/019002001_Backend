@@ -2,6 +2,7 @@ package com.cns.plugin3d.controller;
 
 import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.service.FirmwareService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -53,4 +54,12 @@ public class FirmwareController {
             @PathVariable UUID deviceId) {
         return firmwareService.getFirmwareDownloadUrl(deviceId);
     }
+
+    @PutMapping("/update/{firmwareId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public FirmwareResponse<FirmwareMetadataResponse> updateDevice( @PathVariable("firmwareId") String firmwareId,
+                                                            @Valid @RequestBody FirmwareUpdateRequest request) {
+        return firmwareService.updateFirmware(firmwareId, request);
+    }
+
 }

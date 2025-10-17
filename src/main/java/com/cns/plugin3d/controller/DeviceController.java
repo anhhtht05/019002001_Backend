@@ -35,4 +35,10 @@ public class DeviceController {
     ) {
         return deviceService.getDevice(page, limit, deviceType, hardware, model);
     }
+
+    @PutMapping("/update")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public DeviceRegisterResponse<DeviceResponse> updateDevice(@Valid @RequestBody DeviceUpdateRequest request) {
+        return deviceService.updateDevice(request);
+    }
 }
