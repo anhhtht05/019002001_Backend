@@ -188,15 +188,15 @@ public class FirmwareService {
     }
 
     public PagedResponse<FirmwareMetadataResponse> getFirmware (
-            Integer page, Integer limit ) {
+            Integer page, Integer limit, String status, String modelCompat, String hardwareCompat ) {
 
         int pageIndex = (page != null && page > 0) ? page - 1 : 0;
         int pageSize = (limit != null && limit > 0) ? limit : 20;
         PageRequest pageable = PageRequest.of(pageIndex, pageSize);
 
-        Page<Firmware> resultPage;
-
-        resultPage = firmwareRepository.findAll(pageable);
+        Page<Firmware> resultPage = firmwareRepository.findFilteredFirmwaresNative(
+                status, modelCompat, hardwareCompat, pageable
+        );
 
         return PagedResponseHelper.build(resultPage, fw -> {
             List<String> models = firmwareModelCompatibilityRepository.findModelByFirmwareId(fw.getId());

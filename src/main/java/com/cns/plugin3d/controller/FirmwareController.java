@@ -44,9 +44,12 @@ public class FirmwareController {
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public PagedResponse<FirmwareMetadataResponse> getFirmware(
             @RequestParam(required = false) Integer page,
-            @RequestParam(required = false) Integer limit
+            @RequestParam(required = false) Integer limit,
+            @RequestParam(name = "status", required = false) String status,
+            @RequestParam(name = "model_compat", required = false) String modelCompat,
+            @RequestParam(name = "hardware_compat", required = false) String hardwareCompat
     ) {
-        return firmwareService.getFirmware(page, limit);
+        return firmwareService.getFirmware(page, limit, status, modelCompat, hardwareCompat);
     }
 
     @PostMapping("/device/download")

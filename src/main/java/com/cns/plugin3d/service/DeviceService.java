@@ -122,45 +122,12 @@ public class DeviceService {
         int pageSize = (limit != null && limit > 0) ? limit : 20;
         PageRequest pageable = PageRequest.of(pageIndex, pageSize);
 
-        Page<Device> resultPage;
-
-        if (deviceType != null && hardware != null && model != null) {
-            resultPage = deviceRepository.findByDeviceTypeAndHardwareVersionAndModel(
-                    deviceType, hardware, model, pageable);
-
-        } else if (deviceType != null && hardware != null) {
-            resultPage = deviceRepository.findByDeviceTypeAndHardwareVersion(
-                    deviceType, hardware, pageable);
-
-        } else if (deviceType != null && model != null) {
-            resultPage = deviceRepository.findByDeviceTypeAndModel(
-                    deviceType, model, pageable);
-
-        } else if (hardware != null && model != null) {
-            resultPage = deviceRepository.findByHardwareVersionAndModel(
-                    hardware, model, pageable);
-
-        } else if (deviceType != null) {
-            resultPage = deviceRepository.findByDeviceType(deviceType, pageable);
-
-        } else if (hardware != null) {
-            resultPage = deviceRepository.findByHardwareVersion(hardware, pageable);
-
-        } else if (model != null) {
-            resultPage = deviceRepository.findByModel(model, pageable);
-
-        } else {
-            resultPage = deviceRepository.findAll(pageable);
-        }
+        Page<Device> resultPage = deviceRepository.findFilteredDevices(deviceType, hardware, model, pageable);
 
         List<DeviceResponse> filteredList = resultPage.getContent().stream()
                 .map(device -> {
                     DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
                             .findLatestByDeviceIdNative(device.getId());
-
-                    if (latestStatus != null && latestStatus.getStatus() == StatusType.DELETED) {
-                        return null;
-                    }
 
                     return DeviceResponse.builder()
                             .deviceId(device.getDeviceId())
@@ -174,7 +141,6 @@ public class DeviceService {
                             .status(latestStatus != null ? latestStatus.getStatus() : StatusType.ERROR)
                             .build();
                 })
-                .filter(Objects::nonNull)
                 .toList();
 
         return PagedResponse.<DeviceResponse>builder()
@@ -182,7 +148,7 @@ public class DeviceService {
                 .pagination(PagedResponse.Pagination.builder()
                         .page(pageIndex + 1)
                         .limit(pageSize)
-                        .total(filteredList.size())
+                        .total(resultPage.getTotalElements())
                         .build())
                 .build();
     }

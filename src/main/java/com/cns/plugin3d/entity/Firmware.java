@@ -18,7 +18,6 @@ import java.util.UUID;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-@Where(clause = "status <> 'DELETED'")
 public class Firmware {
     @Id
     @GeneratedValue
