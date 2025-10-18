@@ -2,12 +2,10 @@ package com.cns.plugin3d.service;
 
 
 import com.cns.plugin3d.dto.PagedResponse;
-import com.cns.plugin3d.dto.UpdateUserStateRequest;
-import com.cns.plugin3d.dto.UserDTO;
+import com.cns.plugin3d.dto.UpdateUserRequest;
 import com.cns.plugin3d.dto.UserDetailResponse;
 import com.cns.plugin3d.entity.User;
 import com.cns.plugin3d.enums.RoleType;
-import com.cns.plugin3d.enums.ServiceType;
 import com.cns.plugin3d.enums.StateType;
 import com.cns.plugin3d.exception.CustomException;
 import com.cns.plugin3d.helper.PagedResponseHelper;
@@ -18,7 +16,6 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -58,11 +55,23 @@ public class UserService {
         );
     }
 
-    public UserDetailResponse updateUser(UUID userId, UpdateUserStateRequest request) {
+    public UserDetailResponse updateUser(UUID userId, UpdateUserRequest request) {
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new CustomException("USER_NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        user.setState(request.getState());
+        if (request.getName() != null && !request.getName().isBlank()) {
+            user.setName(request.getName());
+        }
+        if (request.getEmail() != null && !request.getEmail().isBlank()) {
+            user.setEmail(request.getEmail());
+        }
+        if (request.getState() != null) {
+            user.setState(request.getState());
+        }
+        if (request.getRole() != null) {
+            user.setRole(request.getRole());
+        }
+
         userRepository.save(user);
 
         return UserDetailResponse.builder()
@@ -73,4 +82,5 @@ public class UserService {
                 .state(user.getState().name())
                 .build();
     }
+
 }

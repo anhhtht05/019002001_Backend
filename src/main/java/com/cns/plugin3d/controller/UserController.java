@@ -1,20 +1,13 @@
 package com.cns.plugin3d.controller;
 
 import com.cns.plugin3d.dto.PagedResponse;
-import com.cns.plugin3d.dto.UpdatePasswordRequest;
-import com.cns.plugin3d.dto.UpdateUserStateRequest;
+import com.cns.plugin3d.dto.UpdateUserRequest;
 import com.cns.plugin3d.dto.UserDetailResponse;
-import com.cns.plugin3d.entity.User;
-import com.cns.plugin3d.enums.StateType;
 import com.cns.plugin3d.service.UserService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
 import java.util.UUID;
 
 @RestController
@@ -24,7 +17,7 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public PagedResponse<UserDetailResponse> getUsers(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer limit,
@@ -35,10 +28,10 @@ public class UserController {
     }
 
     @PutMapping("/{userId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public UserDetailResponse updateUser(
             @PathVariable UUID userId,
-            @RequestBody UpdateUserStateRequest request
+            @RequestBody UpdateUserRequest request
     ) {
         return userService.updateUser(userId, request);
     }

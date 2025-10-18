@@ -2,7 +2,9 @@ package com.cns.plugin3d.service;
 
 import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.entity.*;
+import com.cns.plugin3d.enums.InstallationStatusType;
 import com.cns.plugin3d.enums.StatusType;
+import com.cns.plugin3d.exception.CustomException;
 import com.cns.plugin3d.helper.PagedResponseHelper;
 import com.cns.plugin3d.repository.*;
 import jakarta.transaction.Transactional;
@@ -10,13 +12,16 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.net.URL;
 import java.security.MessageDigest;
 import java.time.LocalDateTime;
 import java.util.HexFormat;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 
@@ -27,10 +32,11 @@ public class FirmwareService {
     private final FirmwareRepository firmwareRepository;
     private final S3Service s3Service;
     private final DeviceRepository deviceRepository;
-    private final FirmwareDownloadHistoryRepository downloadHistoryRepository;
+    private final FirmwareDownloadHistoryRepository firmwareDownloadHistoryRepository;
     private final DeviceFirmwareRelationRepository deviceFirmwareRelationRepository;
     private final FirmwareModelCompatibilityRepository firmwareModelCompatibilityRepository;
     private final FirmwareHardwareCompatibilityRepository firmwareHardwareCompatibilityRepository;
+    private final DeviceCredentialsRepository deviceCredentialRepository;
 
     @Transactional
     public FirmwareResponse<FirmwareMetadataResponse> uploadFirmwareAndSaveMetadata(FirmwareUploadRequest request) {
@@ -117,56 +123,72 @@ public class FirmwareService {
     }
 
 
-    public FirmwareResponse<FirmwareDownloadResponse> getFirmwareDownloadUrl(UUID deviceId) {
+    public FirmwareResponse<FirmwareDownloadResponse> getFirmwareDownloadUrl(String token, String macAddress) {
 
-        Device device = deviceRepository.findById(deviceId)
-                .orElseThrow(() -> new RuntimeException("Device not found"));
+        Device device = deviceRepository.findByMacAddress(macAddress)
+                .orElseThrow(() -> new CustomException("DEVICE_NOT_FOUND", HttpStatus.NOT_FOUND));
 
-        DeviceFirmwareRelation relation = deviceFirmwareRelationRepository
-                .findTopByDeviceIdOrderByInstalledAtDesc(device.getId())
-                .orElseThrow(() -> new RuntimeException("No firmware assigned to this device"));
+        DeviceCredential credential = deviceCredentialRepository.findByDeviceId(device.getId())
+                .orElseThrow(() -> new CustomException("DEVICE_CREDENTIAL_NOT_FOUND", HttpStatus.UNAUTHORIZED));
 
-        Firmware firmware = firmwareRepository.findById(relation.getFirmwareId())
-                .orElseThrow(() -> new RuntimeException("Firmware not found"));
-
-        if (!"RELEASED".equalsIgnoreCase(firmware.getStatus().toString())) {
-            return FirmwareResponse.error("FIRMWARE_NOT_RELEASED",
-                            "Firmware is not in RELEASED status", null);
+        if (!credential.getApiKey().equals(token)) {
+            throw new CustomException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED);
         }
-        // kiểm tra version xem lastest active
+
+        // FIND COMPATIBLE FIRMWARE (latest RELEASED)
+        Firmware firmware = firmwareRepository
+                .findLatestReleasedFirmwareByModelAndHardware(
+                        device.getModel(), device.getHardwareVersion(), StatusType.RELEASED)
+                .orElseThrow(() -> new CustomException("NO_COMPATIBLE_FIRMWARE", HttpStatus.NOT_FOUND));
+
+        // GENERATE PRE-SIGNED URL
         String fileKey = firmware.getFilePath();
 
         if (!s3Service.exists(fileKey)) {
             return FirmwareResponse.error("FILE_NOT_FOUND",
-                            "Firmware file not found on S3", null);
+                    "Firmware file not found on S3", null);
         }
 
         if (firmware.getChecksum() != null && !firmware.getChecksum().isBlank()) {
             boolean valid = s3Service.verifyFileChecksum(fileKey, firmware.getChecksum());
             if (!valid) {
                 return FirmwareResponse.error("CHECKSUM_MISMATCH",
-                                "Firmware checksum mismatch", null);
+                        "Firmware checksum mismatch", null);
             }
         }
 
         String presignedUrl = s3Service.generatePresignedDownload(fileKey, 10);
 
-        FirmwareDownloadHistory history = new FirmwareDownloadHistory();
-        history.setDeviceId(device.getId());
-        history.setFirmwareId(firmware.getId());
-        history.setDownloadedAt(LocalDateTime.now());
-        downloadHistoryRepository.save(history);
+        // SAVE HISTORY
+        FirmwareDownloadHistory history = FirmwareDownloadHistory.builder()
+                .deviceId(device.getId())
+                .firmwareId(firmware.getId())
+                .downloadedAt(LocalDateTime.now())
+                .build();
+        firmwareDownloadHistoryRepository.save(history);
 
+        //  SAVE RELATION
+        Optional<DeviceFirmwareRelation> existingRelation =
+                deviceFirmwareRelationRepository.findByDeviceIdAndFirmwareId(device.getId(), firmware.getId());
+
+        if (existingRelation.isEmpty()) {
+            DeviceFirmwareRelation relation = DeviceFirmwareRelation.builder()
+                    .deviceId(device.getId())
+                    .firmwareId(firmware.getId())
+                    .installedAt(LocalDateTime.now())
+                    .installationStatus(InstallationStatusType.PENDING)
+                    .build();
+
+            deviceFirmwareRelationRepository.save(relation);
+        }
         FirmwareDownloadResponse response = new FirmwareDownloadResponse();
         response.setUrl(presignedUrl);
 
         return FirmwareResponse.success(response, "Firmware download URL generated");
     }
 
-
-
-    public PagedResponse<FirmwareMetadataResponse> getFirmware(
-            Integer page, Integer limit) {
+    public PagedResponse<FirmwareMetadataResponse> getFirmware (
+            Integer page, Integer limit ) {
 
         int pageIndex = (page != null && page > 0) ? page - 1 : 0;
         int pageSize = (limit != null && limit > 0) ? limit : 20;
@@ -194,6 +216,7 @@ public class FirmwareService {
                     .build();
         });
     }
+
     @Transactional
     public FirmwareResponse<FirmwareMetadataResponse> updateFirmware(String firmwareId, FirmwareUpdateRequest request) {
         try {
@@ -277,5 +300,51 @@ public class FirmwareService {
         byte[] hashBytes = digest.digest(fileBytes);
         return HexFormat.of().formatHex(hashBytes);
     }
+
+//    public FirmwareResponse<FirmwareDownloadResponse> getFirmwareDownloadUrl(UUID deviceId) {
+//
+//        Device device = deviceRepository.findById(deviceId)
+//                .orElseThrow(() -> new RuntimeException("Device not found"));
+//
+//        DeviceFirmwareRelation relation = deviceFirmwareRelationRepository
+//                .findTopByDeviceIdOrderByInstalledAtDesc(device.getId())
+//                .orElseThrow(() -> new RuntimeException("No firmware assigned to this device"));
+//
+//        Firmware firmware = firmwareRepository.findById(relation.getFirmwareId())
+//                .orElseThrow(() -> new RuntimeException("Firmware not found"));
+//
+//        if (!"RELEASED".equalsIgnoreCase(firmware.getStatus().toString())) {
+//            return FirmwareResponse.error("FIRMWARE_NOT_RELEASED",
+//                    "Firmware is not in RELEASED status", null);
+//        }
+//        // kiểm tra version xem lastest active
+//        String fileKey = firmware.getFilePath();
+//
+//        if (!s3Service.exists(fileKey)) {
+//            return FirmwareResponse.error("FILE_NOT_FOUND",
+//                    "Firmware file not found on S3", null);
+//        }
+//
+//        if (firmware.getChecksum() != null && !firmware.getChecksum().isBlank()) {
+//            boolean valid = s3Service.verifyFileChecksum(fileKey, firmware.getChecksum());
+//            if (!valid) {
+//                return FirmwareResponse.error("CHECKSUM_MISMATCH",
+//                        "Firmware checksum mismatch", null);
+//            }
+//        }
+//
+//        String presignedUrl = s3Service.generatePresignedDownload(fileKey, 10);
+//
+//        FirmwareDownloadHistory history = new FirmwareDownloadHistory();
+//        history.setDeviceId(device.getId());
+//        history.setFirmwareId(firmware.getId());
+//        history.setDownloadedAt(LocalDateTime.now());
+//        downloadHistoryRepository.save(history);
+//
+//        FirmwareDownloadResponse response = new FirmwareDownloadResponse();
+//        response.setUrl(presignedUrl);
+//
+//        return FirmwareResponse.success(response, "Firmware download URL generated");
+//    }
 
 }

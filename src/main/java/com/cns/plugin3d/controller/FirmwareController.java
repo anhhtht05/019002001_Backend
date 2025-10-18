@@ -49,10 +49,12 @@ public class FirmwareController {
         return firmwareService.getFirmware(page, limit);
     }
 
-    @GetMapping("/device/{deviceId}/download")
+    @PostMapping("/device/download")
     public FirmwareResponse<FirmwareDownloadResponse> downloadFirmware(
-            @PathVariable UUID deviceId) {
-        return firmwareService.getFirmwareDownloadUrl(deviceId);
+            @RequestHeader("Token") String token,
+            @RequestHeader("X-Token") String macAddress
+           ) {
+        return firmwareService.getFirmwareDownloadUrl(token, macAddress);
     }
 
     @PutMapping("/update/{firmwareId}")

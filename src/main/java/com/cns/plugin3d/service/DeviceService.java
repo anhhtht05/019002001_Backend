@@ -17,6 +17,8 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -151,25 +153,38 @@ public class DeviceService {
             resultPage = deviceRepository.findAll(pageable);
         }
 
-        return PagedResponseHelper.build(resultPage, device -> {
-            DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
-                    .findLatestByDeviceIdNative(device.getId());
+        List<DeviceResponse> filteredList = resultPage.getContent().stream()
+                .map(device -> {
+                    DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
+                            .findLatestByDeviceIdNative(device.getId());
 
-            return DeviceResponse.builder()
-                    .deviceId(device.getDeviceId())
-                    .deviceName(device.getDeviceName())
-                    .deviceType(device.getDeviceType())
-                    .hardwareVersion(device.getHardwareVersion())
-                    .serialNumber(device.getSerialNumber())
-                    .macAddress(device.getMacAddress())
-                    .manufacturer(device.getManufacturer())
-                    .model(device.getModel())
-                    .status(latestStatus != null ? latestStatus.getStatus() : StatusType.ERROR)
-                    .build();
+                    if (latestStatus != null && latestStatus.getStatus() == StatusType.DELETED) {
+                        return null;
+                    }
 
+                    return DeviceResponse.builder()
+                            .deviceId(device.getDeviceId())
+                            .deviceName(device.getDeviceName())
+                            .deviceType(device.getDeviceType())
+                            .hardwareVersion(device.getHardwareVersion())
+                            .serialNumber(device.getSerialNumber())
+                            .macAddress(device.getMacAddress())
+                            .manufacturer(device.getManufacturer())
+                            .model(device.getModel())
+                            .status(latestStatus != null ? latestStatus.getStatus() : StatusType.ERROR)
+                            .build();
+                })
+                .filter(Objects::nonNull)
+                .toList();
 
-        });
-
+        return PagedResponse.<DeviceResponse>builder()
+                .data(filteredList)
+                .pagination(PagedResponse.Pagination.builder()
+                        .page(pageIndex + 1)
+                        .limit(pageSize)
+                        .total(filteredList.size())
+                        .build())
+                .build();
     }
 
 
