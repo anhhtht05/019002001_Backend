@@ -1,5 +1,6 @@
 package com.cns.plugin3d.dto;
 
+import com.cns.plugin3d.enums.StatusDeviceType;
 import com.cns.plugin3d.enums.StatusType;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
@@ -21,5 +22,5 @@ public class DeviceUpdateRequest {
     private String macAddress;
     private String manufacturer;
     private String model;
-    private StatusType status;
+    private StatusDeviceType status;
 }

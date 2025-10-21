@@ -13,46 +13,90 @@ import java.util.UUID;
 public interface DeviceRepository extends JpaRepository<Device, UUID> {
     Optional<Device> findByDeviceId(String deviceId);
 
-    @Query("""
-    SELECT d FROM Device d
-    WHERE (:deviceType IS NULL OR d.deviceType = :deviceType)
-      AND (:hardware IS NULL OR d.hardwareVersion = :hardware)
+    @Query(value = """
+    SELECT *
+    FROM devices d
+    WHERE (:deviceType IS NULL OR d.device_type = :deviceType)
+      AND (:hardware IS NULL OR d.hardware_version = :hardware)
       AND (:model IS NULL OR d.model = :model)
       AND (
-        (SELECT dsh.status FROM DeviceStatusHistory dsh
-         WHERE dsh.deviceId = d.id
-           AND dsh.createdAt = (
-                SELECT MAX(dsh2.createdAt)
-                FROM DeviceStatusHistory dsh2
-                WHERE dsh2.deviceId = d.id
+        (SELECT dsh.status FROM device_status_history dsh
+         WHERE dsh.device_id = d.id
+           AND dsh.created_at = (
+                SELECT MAX(dsh2.created_at)
+                FROM device_status_history dsh2
+                WHERE dsh2.device_id = d.id
            )
         ) IS NULL
         OR
-        (SELECT dsh.status FROM DeviceStatusHistory dsh
-         WHERE dsh.deviceId = d.id
-           AND dsh.createdAt = (
-                SELECT MAX(dsh2.createdAt)
-                FROM DeviceStatusHistory dsh2
-                WHERE dsh2.deviceId = d.id
+        (SELECT dsh.status FROM device_status_history dsh
+         WHERE dsh.device_id = d.id
+           AND dsh.created_at = (
+                SELECT MAX(dsh2.created_at)
+                FROM device_status_history dsh2
+                WHERE dsh2.device_id = d.id
            )
         ) <> 'DELETED'
       )
-""")
-    Page<Device> findFilteredDevices(
+      AND (
+        :search IS NULL OR (
+            LOWER(d.device_name) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.serial_number) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.device_id) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.mac_address::text) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.manufacturer) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.model) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+      )
+    ORDER BY d.created_at DESC
+    """,
+            countQuery = """
+    SELECT COUNT(*)
+    FROM devices d
+    WHERE (:deviceType IS NULL OR d.device_type = :deviceType)
+      AND (:hardware IS NULL OR d.hardware_version = :hardware)
+      AND (:model IS NULL OR d.model = :model)
+      AND (
+        (SELECT dsh.status FROM device_status_history dsh
+         WHERE dsh.device_id = d.id
+           AND dsh.created_at = (
+                SELECT MAX(dsh2.created_at)
+                FROM device_status_history dsh2
+                WHERE dsh2.device_id = d.id
+           )
+        ) IS NULL
+        OR
+        (SELECT dsh.status FROM device_status_history dsh
+         WHERE dsh.device_id = d.id
+           AND dsh.created_at = (
+                SELECT MAX(dsh2.created_at)
+                FROM device_status_history dsh2
+                WHERE dsh2.device_id = d.id
+           )
+        ) <> 'DELETED'
+      )
+      AND (
+        :search IS NULL OR (
+            LOWER(d.device_name) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.serial_number) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.device_id) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.mac_address::text) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.manufacturer) LIKE LOWER(CONCAT('%', :search, '%'))
+         OR LOWER(d.model) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+      )
+    """,
+            nativeQuery = true)
+    Page<Device> findFilteredDevicesNative(
             @Param("deviceType") String deviceType,
             @Param("hardware") String hardware,
             @Param("model") String model,
+            @Param("search") String search,
             Pageable pageable
     );
 
+
+
     Optional<Device> findBySerialNumber(String serialNumber);
     Optional<Device> findByMacAddress(String macAddress);
-    Page<Device> findByDeviceType(String deviceType, Pageable pageable);
-    Page<Device> findByHardwareVersion(String hardwareVersion, Pageable pageable);
-    Page<Device> findByModel(String model, Pageable pageable);
-    Page<Device> findByDeviceTypeAndHardwareVersion(String deviceType, String hardwareVersion, Pageable pageable);
-    Page<Device> findByDeviceTypeAndModel(String deviceType, String model, Pageable pageable);
-    Page<Device> findByHardwareVersionAndModel(String hardwareVersion, String model, Pageable pageable);
-    Page<Device> findByDeviceTypeAndHardwareVersionAndModel(
-            String deviceType, String hardwareVersion, String model, Pageable pageable);
 }

@@ -1,18 +1,11 @@
 package com.cns.plugin3d.entity;
 
-import com.cns.plugin3d.enums.StateType;
-import com.cns.plugin3d.enums.StatusType;
-import com.cns.plugin3d.util.InetAddressConverter;
-import com.vladmihalcea.hibernate.type.basic.Inet;
+import com.cns.plugin3d.enums.StatusDeviceType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.JdbcTypeCode;
-import org.hibernate.annotations.Type;
-import org.hibernate.annotations.Where;
-import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -33,7 +26,7 @@ public class DeviceStatusHistory {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20, nullable = false)
-    private StatusType status;
+    private StatusDeviceType status;
 
 //    @Column(name = "ip_address", columnDefinition = "inet")
 //    private String ipAddress;

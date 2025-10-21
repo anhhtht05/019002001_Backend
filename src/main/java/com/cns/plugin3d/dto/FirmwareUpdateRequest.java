@@ -1,5 +1,6 @@
 package com.cns.plugin3d.dto;
 
+import com.cns.plugin3d.enums.StatusFirmwareType;
 import com.cns.plugin3d.enums.StatusType;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -20,5 +21,5 @@ public class FirmwareUpdateRequest {
     private List<@NotBlank String> hardwareCompat;
 
     @NotNull(message = "Status is required")
-    private StatusType status;
+    private StatusFirmwareType status;
 }

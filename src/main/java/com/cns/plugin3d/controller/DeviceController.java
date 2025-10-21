@@ -31,9 +31,10 @@ public class DeviceController {
             @RequestParam(required = false) Integer limit,
             @RequestParam(name = "device_type", required = false) String deviceType,
             @RequestParam(name = "hardware", required = false) String hardware,
-            @RequestParam(name = "model", required = false) String model
+            @RequestParam(name = "model", required = false) String model,
+            @RequestParam(name = "search", required = false) String search
     ) {
-        return deviceService.getDevice(page, limit, deviceType, hardware, model);
+        return deviceService.getDevice(page, limit, deviceType, hardware, model, search);
     }
 
     @PutMapping("/update")

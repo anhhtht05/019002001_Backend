@@ -1,6 +1,7 @@
 package com.cns.plugin3d.repository;
 
 import com.cns.plugin3d.entity.Firmware;
+import com.cns.plugin3d.enums.StatusFirmwareType;
 import com.cns.plugin3d.enums.StatusType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -32,7 +33,7 @@ public interface FirmwareRepository extends JpaRepository<Firmware, UUID> {
     Optional<Firmware> findLatestReleasedFirmwareByModelAndHardware(
             @Param("model") String model,
             @Param("hardware") String hardware,
-            @Param("status") StatusType status
+            @Param("status") StatusFirmwareType status
     );
 
 
@@ -45,6 +46,14 @@ public interface FirmwareRepository extends JpaRepository<Firmware, UUID> {
       AND (:status IS NULL OR f.status = :status)
       AND (:modelCompat IS NULL OR fmc.model = :modelCompat)
       AND (:hardwareCompat IS NULL OR fhc.hardware_version = :hardwareCompat)
+      AND (
+        :search IS NULL OR (
+          LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR LOWER(f.version) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR LOWER(f.description) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR LOWER(f.file_path) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+      )
     ORDER BY f.id,
       COALESCE(NULLIF(SPLIT_PART(REGEXP_REPLACE(f.version, '[^0-9\\.]', '', 'g'), '.', 1), '')::int, 0),
       COALESCE(NULLIF(SPLIT_PART(REGEXP_REPLACE(f.version, '[^0-9\\.]', '', 'g'), '.', 2), '')::int, 0),
@@ -59,14 +68,24 @@ public interface FirmwareRepository extends JpaRepository<Firmware, UUID> {
       AND (:status IS NULL OR f.status = :status)
       AND (:modelCompat IS NULL OR fmc.model = :modelCompat)
       AND (:hardwareCompat IS NULL OR fhc.hardware_version = :hardwareCompat)
+      AND (
+        :search IS NULL OR (
+          LOWER(f.name) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR LOWER(f.version) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR LOWER(f.description) LIKE LOWER(CONCAT('%', :search, '%'))
+          OR LOWER(f.file_path) LIKE LOWER(CONCAT('%', :search, '%'))
+        )
+      )
     """,
             nativeQuery = true)
     Page<Firmware> findFilteredFirmwaresNative(
             @Param("status") String status,
             @Param("modelCompat") String modelCompat,
             @Param("hardwareCompat") String hardwareCompat,
+            @Param("search") String search,
             Pageable pageable
     );
+
 
 
 

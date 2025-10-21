@@ -1,6 +1,7 @@
 package com.cns.plugin3d.entity;
 
 import com.cns.plugin3d.enums.StateType;
+import com.cns.plugin3d.enums.StatusDeviceCampainType;
 import com.cns.plugin3d.enums.StatusType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -33,7 +34,7 @@ public class CampaignDeviceRelation {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private StatusType status = StatusType.PENDING;
+    private StatusDeviceCampainType status = StatusDeviceCampainType.PENDING;
 
     private Integer progress;
 

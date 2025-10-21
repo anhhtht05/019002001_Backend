@@ -4,6 +4,8 @@ import com.cns.plugin3d.exception.AuthExceptions;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.security.Keys;
+import jakarta.annotation.PostConstruct;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
@@ -12,9 +14,15 @@ import java.util.Date;
 @Component
 public class JwtUtil {
 
-    private final String secret = "y3J8vJ8zQfK1e3H4p9L2v7X1y0F9sR3bN8gW4tK2uM1vD0yJ7pQ6zS9hX5lA8oB3";
+    @Value("${spring.secret}")
+    private String secret;
 
-    private final SecretKey secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    private SecretKey secretKey;
+
+    @PostConstruct
+    public void init() {
+        this.secretKey = Keys.hmacShaKeyFor(secret.getBytes());
+    }
 
     public String generateToken(String email, String role, long expirationSec) {
         return Jwts.builder()

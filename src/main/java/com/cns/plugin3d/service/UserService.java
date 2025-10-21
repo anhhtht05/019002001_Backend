@@ -13,9 +13,11 @@ import com.cns.plugin3d.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -25,25 +27,17 @@ public class UserService {
     private final UserRepository userRepository;
 
     public PagedResponse<UserDetailResponse> getUsers (
-            Integer page, Integer limit, String role, String state){
+            Integer page, Integer limit, String role, String state, String search){
         int pageIndex = (page != null && page > 0) ? page - 1 : 0;
         int pageSize = (limit != null && limit > 0) ? limit : 20;
-        PageRequest pageable = PageRequest.of(pageIndex, pageSize);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
 
-        Page<User> resultPage;
-        if (role != null && state != null) {
-            RoleType st = RoleType.valueOf(role.toUpperCase());
-            StateType stt = StateType.valueOf(state.toUpperCase());
-            resultPage = userRepository.findByRoleAndState(st, stt, pageable);
-        } else if (role != null) {
-            RoleType st = RoleType.valueOf(role.toUpperCase());
-            resultPage = userRepository.findByRole(st, pageable);
-        } else if (state != null) {
-            StateType stt = StateType.valueOf(state.toUpperCase());
-            resultPage = userRepository.findByState(stt, pageable);
-        } else {
-            resultPage = userRepository.findAll(pageable);
-        }
+        Page<User> resultPage = userRepository.findFilteredUsers(
+                role != null ? role.toUpperCase() : null,
+                state != null ? state.toUpperCase() : null,
+                (search != null && !search.isBlank()) ? search : null,
+                pageable
+        );
 
         return PagedResponseHelper.build(resultPage, user -> UserDetailResponse.builder()
                 .id(user.getId())

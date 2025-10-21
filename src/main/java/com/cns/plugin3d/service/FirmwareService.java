@@ -3,6 +3,7 @@ package com.cns.plugin3d.service;
 import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.entity.*;
 import com.cns.plugin3d.enums.InstallationStatusType;
+import com.cns.plugin3d.enums.StatusFirmwareType;
 import com.cns.plugin3d.enums.StatusType;
 import com.cns.plugin3d.exception.CustomException;
 import com.cns.plugin3d.helper.PagedResponseHelper;
@@ -83,7 +84,7 @@ public class FirmwareService {
             firmware.setFilePath(key);
             firmware.setFileSize(request.getFile().getSize());
             firmware.setChecksum(checksum);
-            firmware.setStatus(StatusType.DRAFT);
+            firmware.setStatus(StatusFirmwareType.DRAFT);
             firmware.setCreatedAt(LocalDateTime.now());
             firmware.setUpdatedAt(LocalDateTime.now());
             Firmware savedFirmware = firmwareRepository.save(firmware);
@@ -138,7 +139,7 @@ public class FirmwareService {
         // FIND COMPATIBLE FIRMWARE (latest RELEASED)
         Firmware firmware = firmwareRepository
                 .findLatestReleasedFirmwareByModelAndHardware(
-                        device.getModel(), device.getHardwareVersion(), StatusType.RELEASED)
+                        device.getModel(), device.getHardwareVersion(), StatusFirmwareType.RELEASED)
                 .orElseThrow(() -> new CustomException("NO_COMPATIBLE_FIRMWARE", HttpStatus.NOT_FOUND));
 
         // GENERATE PRE-SIGNED URL
@@ -188,14 +189,14 @@ public class FirmwareService {
     }
 
     public PagedResponse<FirmwareMetadataResponse> getFirmware (
-            Integer page, Integer limit, String status, String modelCompat, String hardwareCompat ) {
+            Integer page, Integer limit, String status, String modelCompat, String hardwareCompat, String search ) {
 
         int pageIndex = (page != null && page > 0) ? page - 1 : 0;
         int pageSize = (limit != null && limit > 0) ? limit : 20;
         PageRequest pageable = PageRequest.of(pageIndex, pageSize);
 
         Page<Firmware> resultPage = firmwareRepository.findFilteredFirmwaresNative(
-                status, modelCompat, hardwareCompat, pageable
+                status, modelCompat, hardwareCompat, search, pageable
         );
 
         return PagedResponseHelper.build(resultPage, fw -> {
@@ -234,7 +235,7 @@ public class FirmwareService {
                 return FirmwareResponse.error("NOT_FOUND", "Firmware not found", null);
             }
 
-            if (firmware.getStatus() == StatusType.RELEASED) {
+            if (firmware.getStatus() == StatusFirmwareType.RELEASED) {
                 return FirmwareResponse.error(
                         "UPDATE_FORBIDDEN",
                         "Firmware in RELEASED state cannot be updated",

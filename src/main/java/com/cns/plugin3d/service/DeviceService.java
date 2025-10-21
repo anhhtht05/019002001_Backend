@@ -4,6 +4,7 @@ import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.entity.Device;
 import com.cns.plugin3d.entity.DeviceCredential;
 import com.cns.plugin3d.entity.DeviceStatusHistory;
+import com.cns.plugin3d.enums.StatusDeviceType;
 import com.cns.plugin3d.enums.StatusType;
 import com.cns.plugin3d.exception.DeviceException;
 import com.cns.plugin3d.helper.PagedResponseHelper;
@@ -12,13 +13,15 @@ import com.cns.plugin3d.repository.DeviceRepository;
 import com.cns.plugin3d.repository.DeviceStatusHistoryRepository;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.core.env.Environment;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -28,6 +31,9 @@ public class DeviceService {
     private final DeviceRepository deviceRepository;
     private final DeviceCredentialsRepository deviceCredentialsRepository;
     private final DeviceStatusHistoryRepository deviceStatusHistoryRepository;
+
+    @Value("${spring.apikey}")
+    private String apiKey;
 
     @Transactional
     public DeviceRegisterResponse<DeviceRegisterDetailResponse>
@@ -82,8 +88,8 @@ public class DeviceService {
         LocalDateTime expiresAt = LocalDateTime.now().plusYears(1);
         DeviceCredential credential = DeviceCredential.builder()
                 .deviceId(device.getId())
-                .apiKey(UUID.randomUUID().toString())
-                .secretKey(UUID.randomUUID().toString())
+                .apiKey(apiKey)
+                .secretKey(null)
                 .status(StatusType.ACTIVE)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(expiresAt)
@@ -94,7 +100,7 @@ public class DeviceService {
 
         DeviceStatusHistory history = DeviceStatusHistory.builder()
                 .deviceId(device.getId())
-                .status(StatusType.ONLINE)
+                .status(StatusDeviceType.UNKNOWN)
 //                .ipAddress(httpRequest.getRemoteAddr())
                 .lastSeen(LocalDateTime.now())
                 .createdAt(LocalDateTime.now())
@@ -116,43 +122,18 @@ public class DeviceService {
 
 
     public PagedResponse<DeviceResponse> getDevice(
-            Integer page, Integer limit, String deviceType, String hardware, String model) {
+            Integer page, Integer limit, String deviceType, String hardware, String model, String search) {
 
         int pageIndex = (page != null && page > 0) ? page - 1 : 0;
         int pageSize = (limit != null && limit > 0) ? limit : 20;
-        PageRequest pageable = PageRequest.of(pageIndex, pageSize);
+        Pageable pageable = PageRequest.of(pageIndex, pageSize);
 
-        Page<Device> resultPage = deviceRepository.findFilteredDevices(deviceType, hardware, model, pageable);
+        Page<Device> resultPage = deviceRepository.findFilteredDevicesNative(
+                deviceType, hardware, model, search, pageable
+        );
 
-        List<DeviceResponse> filteredList = resultPage.getContent().stream()
-                .map(device -> {
-                    DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
-                            .findLatestByDeviceIdNative(device.getId());
-
-                    return DeviceResponse.builder()
-                            .deviceId(device.getDeviceId())
-                            .deviceName(device.getDeviceName())
-                            .deviceType(device.getDeviceType())
-                            .hardwareVersion(device.getHardwareVersion())
-                            .serialNumber(device.getSerialNumber())
-                            .macAddress(device.getMacAddress())
-                            .manufacturer(device.getManufacturer())
-                            .model(device.getModel())
-                            .status(latestStatus != null ? latestStatus.getStatus() : StatusType.ERROR)
-                            .build();
-                })
-                .toList();
-
-        return PagedResponse.<DeviceResponse>builder()
-                .data(filteredList)
-                .pagination(PagedResponse.Pagination.builder()
-                        .page(pageIndex + 1)
-                        .limit(pageSize)
-                        .total(resultPage.getTotalElements())
-                        .build())
-                .build();
+        return PagedResponseHelper.build(resultPage, DeviceResponse::fromEntity);
     }
-
 
     public DeviceRegisterResponse<DeviceResponse> updateDevice(DeviceUpdateRequest request) {
         Device device = deviceRepository.findByDeviceId(request.getDeviceId())
@@ -181,7 +162,7 @@ public class DeviceService {
                 .macAddress(deviceUpdate.getMacAddress())
                 .manufacturer(deviceUpdate.getManufacturer())
                 .model(deviceUpdate.getModel())
-                .status(latestStatus != null ? latestStatus.getStatus() : StatusType.ERROR)
+                .status(latestStatus != null ? latestStatus.getStatus() : StatusDeviceType.ERROR)
                 .build();
     return DeviceRegisterResponse.<DeviceResponse>builder()
                 .success(true)

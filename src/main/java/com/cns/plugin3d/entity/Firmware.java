@@ -1,6 +1,7 @@
 package com.cns.plugin3d.entity;
 
 import com.cns.plugin3d.enums.StateType;
+import com.cns.plugin3d.enums.StatusFirmwareType;
 import com.cns.plugin3d.enums.StatusType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
@@ -46,7 +47,7 @@ public class Firmware {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private StatusType status;
+    private StatusFirmwareType status;
 
     @Column(name = "created_by")
     private UUID createdBy;

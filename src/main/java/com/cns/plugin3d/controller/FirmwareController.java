@@ -47,9 +47,10 @@ public class FirmwareController {
             @RequestParam(required = false) Integer limit,
             @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "model_compat", required = false) String modelCompat,
-            @RequestParam(name = "hardware_compat", required = false) String hardwareCompat
+            @RequestParam(name = "hardware_compat", required = false) String hardwareCompat,
+             @RequestParam(name = "search", required = false) String search
     ) {
-        return firmwareService.getFirmware(page, limit, status, modelCompat, hardwareCompat);
+        return firmwareService.getFirmware(page, limit, status, modelCompat, hardwareCompat, search);
     }
 
     @PostMapping("/device/download")

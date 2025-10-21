@@ -1,8 +1,6 @@
 package com.cns.plugin3d.entity;
 
-import com.cns.plugin3d.enums.ScheduleType;
-import com.cns.plugin3d.enums.StateType;
-import com.cns.plugin3d.enums.StatusType;
+import com.cns.plugin3d.enums.*;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -37,7 +35,7 @@ public class OtaCampaign {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private StatusType status = StatusType.DRAFT;
+    private StatusOtaCampaignType status = StatusOtaCampaignType.DRAFT;
 
     @Column(name = "rollout_percentage")
     private Integer rolloutPercentage;

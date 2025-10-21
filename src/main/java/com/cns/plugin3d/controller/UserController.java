@@ -22,9 +22,10 @@ public class UserController {
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer limit,
             @RequestParam(name = "role", required = false) String role,
-            @RequestParam(name = "state", required = false) String state
+            @RequestParam(name = "state", required = false) String state,
+            @RequestParam(name = "search", required = false) String search
     ) {
-        return userService.getUsers(page, limit, role, state);
+        return userService.getUsers(page, limit, role, state, search);
     }
 
     @PutMapping("/{userId}")
