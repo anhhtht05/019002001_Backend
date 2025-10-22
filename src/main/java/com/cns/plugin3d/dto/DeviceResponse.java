@@ -16,6 +16,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @Builder
 public class DeviceResponse {
+    private  String id;
     private String deviceId;
     private String deviceName;
     private String deviceType;
@@ -29,6 +30,7 @@ public class DeviceResponse {
         if (device == null) return null;
 
         return DeviceResponse.builder()
+                .id(device.getId().toString())
                 .deviceId(device.getDeviceId())
                 .deviceName(device.getDeviceName())
                 .deviceType(device.getDeviceType())

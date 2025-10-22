@@ -20,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.core.env.Environment;
 
+import java.time.Instant;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.UUID;
@@ -170,4 +171,23 @@ public class DeviceService {
                 .message("Device updated successfully")
                 .build();
     }
+
+    @Transactional
+    public CustomResponse deleteDevice(String deviceId) {
+        Device device = deviceRepository.findByDeviceId(deviceId)
+                .orElseThrow(() -> new DeviceException(
+                        "DEVICE_NOT_FOUND",
+                        "Device not found",
+                        "Device with ID " + deviceId + " does not exist"
+                ));
+
+        deviceRepository.delete(device);
+
+        return CustomResponse.builder()
+                .success(true)
+                .message("Device deleted successfully: " + deviceId)
+                .timestamp(Instant.now())
+                .build();
+    }
+
 }

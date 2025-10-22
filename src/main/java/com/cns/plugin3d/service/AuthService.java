@@ -104,33 +104,6 @@ public class AuthService {
         return new UserDTO(user.getId(), user.getRole().name(), user.getName(), user.getEmail());
     }
 
-    public LoginResponse register(RegisterRequest request) {
-        if (userRepository.findByEmail(request.getEmail()).isPresent()) {
-            throw new CustomException("Email already exists", HttpStatus.CONFLICT);
-        }
-
-        User newUser = new User();
-        newUser.setName(request.getName());
-        newUser.setEmail(request.getEmail());
-        newUser.setPassword(passwordEncoder.encode(request.getPassword()));
-        newUser.setRole(RoleType.ROLE_ADMIN);
-        newUser.setState(StateType.ACTIVE);
-
-        userRepository.save(newUser);
-
-        String accessToken = jwtUtil.generateToken(newUser.getEmail(), newUser.getRole().name(), 3600);
-        String refreshTokenStr = jwtUtil.generateToken(newUser.getEmail(), newUser.getRole().name(), REFRESH_TOKEN_EXP);
-
-        RefreshToken refreshToken = refreshTokenRepository.save(new RefreshToken(refreshTokenStr));
-        userRefreshTokenRepository.save(new UserRefreshToken(newUser, refreshToken));
-
-        return new LoginResponse(
-                accessToken,
-                refreshTokenStr,
-                ACCESS_TOKEN_EXP,
-                new UserDTO(newUser.getId(), newUser.getRole().name(), newUser.getName(), newUser.getEmail())
-        );
-    }
     @Transactional
     public CustomResponse updatePassword(String email, String oldPassword, String newPassword) {
         User user = userRepository.findByEmail(email)

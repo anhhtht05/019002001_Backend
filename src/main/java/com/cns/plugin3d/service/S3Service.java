@@ -127,6 +127,26 @@ public class S3Service {
         return presigner.presignGetObject(presignRequest).url().toString();
     }
 
+    public boolean deleteFile(String key) {
+        try {
+            DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
+                    .bucket(bucket)
+                    .key(key)
+                    .build();
+
+            s3.deleteObject(deleteRequest);
+            return true;
+        } catch (NoSuchKeyException e) {
+            return false;
+        } catch (S3Exception e) {
+            if (e.statusCode() == 404) {
+                return false;
+            }
+            throw new RuntimeException("Failed to delete file from S3: " + e.awsErrorDetails().errorMessage(), e);
+        } catch (Exception e) {
+            throw new RuntimeException("Unexpected error deleting file from S3", e);
+        }
+    }
 
     @PreDestroy
     public void close() {

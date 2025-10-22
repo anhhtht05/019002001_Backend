@@ -1,6 +1,7 @@
 package com.cns.plugin3d.controller;
 
 import com.cns.plugin3d.dto.*;
+import com.cns.plugin3d.enums.StatusFirmwareType;
 import com.cns.plugin3d.service.FirmwareService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -22,23 +23,9 @@ public class FirmwareController {
     @PostMapping(value = "/upload", consumes = "multipart/form-data")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
     public FirmwareResponse<FirmwareMetadataResponse> uploadFirmware(
-            @ModelAttribute FirmwareUploadRequest request) {
+            @Valid @ModelAttribute FirmwareUploadRequest request) {
         return firmwareService.uploadFirmwareAndSaveMetadata(request);
     }
-//    @PostMapping("/presign")
-//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-//    public FirmwareResponse<FirmwarePresignedUrlResponse> createPresignedUrl(
-//            @RequestBody VersionRequest request) {
-//      return firmwareService.generatePresignedUrl(request);
-//    }
-//
-//    @PostMapping("/update")
-//    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-//    public FirmwareResponse<FirmwareMetadataResponse> saveFirmwareMetadata(
-//            @RequestBody FirmwareUploadRequest request) {
-//        String fileKey = "firmware/" + request.getVersion() + "/" + request.getFileName();
-//         return firmwareService.saveFirmwareMetadata(request, fileKey);
-//    }
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
@@ -48,7 +35,7 @@ public class FirmwareController {
             @RequestParam(name = "status", required = false) String status,
             @RequestParam(name = "model_compat", required = false) String modelCompat,
             @RequestParam(name = "hardware_compat", required = false) String hardwareCompat,
-             @RequestParam(name = "search", required = false) String search
+            @RequestParam(name = "search", required = false) String search
     ) {
         return firmwareService.getFirmware(page, limit, status, modelCompat, hardwareCompat, search);
     }
@@ -63,9 +50,33 @@ public class FirmwareController {
 
     @PutMapping("/update/{firmwareId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public FirmwareResponse<FirmwareMetadataResponse> updateDevice( @PathVariable("firmwareId") String firmwareId,
+    public FirmwareResponse<FirmwareMetadataResponse> updateFirmware( @PathVariable("firmwareId") String firmwareId,
                                                             @Valid @RequestBody FirmwareUpdateRequest request) {
         return firmwareService.updateFirmware(firmwareId, request);
+    }
+
+    @PutMapping("/deprecate-outdate/{firmwareId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public FirmwareResponse<FirmwareMetadataResponse> deprecateAndOutdateFirmware(
+            @PathVariable("firmwareId") String firmwareId,
+             @RequestParam("targetStatus") StatusFirmwareType targetStatus
+    ) {
+        return firmwareService.deprecateAndOutdateFirmware(firmwareId, targetStatus);
+    }
+
+    @PutMapping("/realese-outdate/{firmwareId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public FirmwareResponse<FirmwareMetadataResponse> releaseAndOutdateFirmware(
+            @PathVariable("firmwareId") String firmwareId,
+            @RequestParam("targetStatus") StatusFirmwareType targetStatus
+    ) {
+        return firmwareService.releaseAndOutdateFirmware(firmwareId, targetStatus);
+    }
+
+    @DeleteMapping("/delete/{firmwareId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public FirmwareResponse deleteFirmware(@PathVariable("firmwareId") String firmwareId) {
+        return firmwareService.deleteFirmware(firmwareId);
     }
 
 }

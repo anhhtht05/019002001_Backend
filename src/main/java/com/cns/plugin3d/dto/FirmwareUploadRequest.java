@@ -15,7 +15,7 @@ public class FirmwareUploadRequest {
     private String firmwareName;
 
     @NotBlank(message = "Version is required")
-//    @Pattern(regexp = "^(v)?\\d+(\\.\\d+){1,2}$", message = "Invalid version format (ex: 1.0.0 or v1.0.0)")
+    @Pattern(regexp = "^(v)\\d+(\\.\\d+){1,2}$", message = "Invalid version format (v1.0.0)")
     private String version;
 
     @NotBlank(message = "Description is required")
@@ -27,7 +27,7 @@ public class FirmwareUploadRequest {
     @NotNull(message = "Hardware compatibility is required")
     private List<@NotBlank String> hardwareCompat;
 
-    @NotBlank(message = "File is required")
+    @NotNull(message = "File is required")
     private MultipartFile file;
 
 }

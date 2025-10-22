@@ -1,9 +1,8 @@
 package com.cns.plugin3d.controller;
 
-import com.cns.plugin3d.dto.PagedResponse;
-import com.cns.plugin3d.dto.UpdateUserRequest;
-import com.cns.plugin3d.dto.UserDetailResponse;
+import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.service.UserService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
@@ -28,16 +27,19 @@ public class UserController {
         return userService.getUsers(page, limit, role, state, search);
     }
 
+    @PostMapping("/add")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public CustomResponse addUser(@Valid @RequestBody AddUserRequest request) {
+        return userService.addUser(request);
+    }
+
     @PutMapping("/{userId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public UserDetailResponse updateUser(
             @PathVariable UUID userId,
-            @RequestBody UpdateUserRequest request
+            @Valid @RequestBody UpdateUserRequest request
     ) {
         return userService.updateUser(userId, request);
     }
-
-
-
 
 }

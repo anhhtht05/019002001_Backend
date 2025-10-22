@@ -26,7 +26,7 @@ public class DeviceController {
 
     @GetMapping
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public PagedResponse<DeviceResponse> getLicensePlans(
+    public PagedResponse<DeviceResponse> getDevices(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer limit,
             @RequestParam(name = "device_type", required = false) String deviceType,
@@ -42,4 +42,11 @@ public class DeviceController {
     public DeviceRegisterResponse<DeviceResponse> updateDevice(@Valid @RequestBody DeviceUpdateRequest request) {
         return deviceService.updateDevice(request);
     }
+
+    @DeleteMapping("/{deviceId}")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    public CustomResponse deleteDevice(@PathVariable String deviceId) {
+        return deviceService.deleteDevice(deviceId);
+    }
+
 }
