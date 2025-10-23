@@ -308,48 +308,51 @@ public class FirmwareService {
     }
 
     @Transactional
-    public FirmwareResponse<FirmwareMetadataResponse> deprecateAndOutdateFirmware(String firmwareId, StatusFirmwareType targetStatus) {
+    public FirmwareResponse<FirmwareMetadataResponse> updateFirmwareStatus(String firmwareId, String status) {
         try {
             UUID id;
             try {
                 id = UUID.fromString(firmwareId);
             } catch (IllegalArgumentException e) {
-                return FirmwareResponse.error("INVALID_ID", "Invalid firmware ID format", null);
+                return FirmwareResponse.error("INVALID_ID", "Invalid firmware ID format", "Firmware not found");
             }
 
             Firmware firmware = firmwareRepository.findById(id)
                     .orElse(null);
 
             if (firmware == null) {
-                return FirmwareResponse.error("NOT_FOUND", "Firmware not found", null);
+                return FirmwareResponse.error("NOT_FOUND", "Firmware not found","Firmware not found");
             }
 
-            if (firmware.getStatus() != StatusFirmwareType.RELEASED) {
+            StatusFirmwareType currentStatus = firmware.getStatus();
+            StatusFirmwareType newStatus;
+
+            try {
+                newStatus = StatusFirmwareType.valueOf(status.toUpperCase());
+            } catch (IllegalArgumentException e) {
                 return FirmwareResponse.error(
-                        "INVALID_STATE",
-                        "Only firmware in RELEASED state can be changed to DEPRECATED or OUTDATED",
-                        "Only firmware in RELEASED state can be changed to DEPRECATED or OUTDATED"
-                );
-            }
-//            StatusFirmwareType newStatus;
-//            try {
-//                newStatus = StatusFirmwareType.valueOf(targetStatus.toUpperCase());
-//            } catch (IllegalArgumentException e) {
-//                return FirmwareResponse.error(
-//                        "INVALID_TARGET_STATUS",
-//                        "Target status must be either DEPRECATED or OUTDATED",
-//                        null
-//                );
-//            }
-            if (targetStatus != StatusFirmwareType.DEPRECATED && targetStatus != StatusFirmwareType.OUTDATED) {
-                return FirmwareResponse.error(
-                        "INVALID_TARGET_STATUS",
-                        "Target status must be DEPRECATED or OUTDATED",
-                        null
+                        "INVALID_STATUS",
+                        "Status must be a valid enum value",
+                        "Status must be a valid enum value"
                 );
             }
 
-            firmware.setStatus(targetStatus);
+            boolean allowed = switch (currentStatus) {
+                case DRAFT -> newStatus == StatusFirmwareType.RELEASED;
+                case RELEASED -> newStatus == StatusFirmwareType.DEPRECATED || newStatus == StatusFirmwareType.OUTDATED;
+                case DEPRECATED -> newStatus == StatusFirmwareType.RELEASED || newStatus == StatusFirmwareType.OUTDATED;
+                case OUTDATED -> false;
+            };
+
+            if (!allowed) {
+                return FirmwareResponse.error(
+                        "INVALID_TRANSITION",
+                        String.format("Cannot change firmware from %s to %s", currentStatus, newStatus),
+                        String.format("Cannot change firmware from %s to %s", currentStatus, newStatus)
+                );
+            }
+
+            firmware.setStatus(newStatus);
             firmware.setUpdatedAt(LocalDateTime.now());
             firmwareRepository.save(firmware);
 
@@ -365,77 +368,14 @@ public class FirmwareService {
                     .updatedAt(firmware.getUpdatedAt())
                     .build();
 
-            return FirmwareResponse.success(metadata, "Firmware successfully updated to " + targetStatus.name());
+            return FirmwareResponse.success(metadata,
+                    String.format("Firmware status updated from %s to %s", currentStatus, newStatus));
 
         } catch (Exception e) {
             return FirmwareResponse.error("UPDATE_STATUS_ERROR", "Failed to update firmware status", e.getMessage());
         }
     }
 
-    @Transactional
-    public FirmwareResponse<FirmwareMetadataResponse> realeaseAndOutdateFirmware(String firmwareId, StatusFirmwareType targetStatus) {
-        try {
-            UUID id;
-            try {
-                id = UUID.fromString(firmwareId);
-            } catch (IllegalArgumentException e) {
-                return FirmwareResponse.error("INVALID_ID", "Invalid firmware ID format", null);
-            }
-
-            Firmware firmware = firmwareRepository.findById(id)
-                    .orElse(null);
-
-            if (firmware == null) {
-                return FirmwareResponse.error("NOT_FOUND", "Firmware not found", null);
-            }
-
-            if (firmware.getStatus() != StatusFirmwareType.DEPRECATED) {
-                return FirmwareResponse.error(
-                        "INVALID_STATE",
-                        "Only firmware in DEPRECATED state can be changed to RELEASED or OUTDATED",
-                        "Only firmware in DEPRECATED state can be changed to RELEASED or OUTDATED"
-                );
-            }
-//            StatusFirmwareType newStatus;
-//            try {
-//                newStatus = StatusFirmwareType.valueOf(targetStatus.toUpperCase());
-//            } catch (IllegalArgumentException e) {
-//                return FirmwareResponse.error(
-//                        "INVALID_TARGET_STATUS",
-//                        "Target status must be either RELEASED or OUTDATED",
-//                        null
-//                );
-//            }
-            if (targetStatus != StatusFirmwareType.RELEASED && targetStatus != StatusFirmwareType.OUTDATED) {
-                return FirmwareResponse.error(
-                        "INVALID_TARGET_STATUS",
-                        "Target status must be RELEASED or OUTDATED",
-                        null
-                );
-            }
-
-            firmware.setStatus(targetStatus);
-            firmware.setUpdatedAt(LocalDateTime.now());
-            firmwareRepository.save(firmware);
-
-            FirmwareMetadataResponse metadata = FirmwareMetadataResponse.builder()
-                    .id(firmware.getId().toString())
-                    .name(firmware.getName())
-                    .version(firmware.getVersion())
-                    .description(firmware.getDescription())
-                    .status(firmware.getStatus().toString())
-                    .filePath(firmware.getFilePath())
-                    .fileSize(firmware.getFileSize())
-                    .createdAt(firmware.getCreatedAt())
-                    .updatedAt(firmware.getUpdatedAt())
-                    .build();
-
-            return FirmwareResponse.success(metadata, "Firmware successfully updated to " + targetStatus.name());
-
-        } catch (Exception e) {
-            return FirmwareResponse.error("UPDATE_STATUS_ERROR", "Failed to update firmware status", e.getMessage());
-        }
-    }
 
     @Transactional
     public FirmwareResponse deleteFirmware(String firmwareId) {

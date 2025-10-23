@@ -55,22 +55,12 @@ public class FirmwareController {
         return firmwareService.updateFirmware(firmwareId, request);
     }
 
-    @PutMapping("/deprecate-outdate/{firmwareId}")
+    @PutMapping("/update-status/{firmwareId}")
     @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public FirmwareResponse<FirmwareMetadataResponse> deprecateAndOutdateFirmware(
+    public FirmwareResponse<FirmwareMetadataResponse> updateFirmwareStatus(
             @PathVariable("firmwareId") String firmwareId,
-             @RequestParam("targetStatus") StatusFirmwareType targetStatus
-    ) {
-        return firmwareService.deprecateAndOutdateFirmware(firmwareId, targetStatus);
-    }
-
-    @PutMapping("/realese-outdate/{firmwareId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
-    public FirmwareResponse<FirmwareMetadataResponse> releaseAndOutdateFirmware(
-            @PathVariable("firmwareId") String firmwareId,
-            @RequestParam("targetStatus") StatusFirmwareType targetStatus
-    ) {
-        return firmwareService.releaseAndOutdateFirmware(firmwareId, targetStatus);
+            @RequestParam("status") String status) {
+        return firmwareService.updateFirmwareStatus(firmwareId, status);
     }
 
     @DeleteMapping("/delete/{firmwareId}")
