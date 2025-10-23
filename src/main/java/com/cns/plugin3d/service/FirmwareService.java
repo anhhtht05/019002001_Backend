@@ -132,6 +132,10 @@ public class FirmwareService {
         DeviceCredential credential = deviceCredentialRepository.findByDeviceId(device.getId())
                 .orElseThrow(() -> new CustomException("DEVICE_CREDENTIAL_NOT_FOUND", HttpStatus.UNAUTHORIZED));
 
+        if (credential.getStatus() == null || !credential.getStatus().name().equals("ACTIVE")) {
+            throw new CustomException("CREDENTIAL_INACTIVE", HttpStatus.UNAUTHORIZED);
+        }
+
         if (!credential.getApiKey().equals(token)) {
             throw new CustomException("INVALID_TOKEN", HttpStatus.UNAUTHORIZED);
         }
