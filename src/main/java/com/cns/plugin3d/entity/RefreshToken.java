@@ -1,12 +1,10 @@
 package com.cns.plugin3d.entity;
 
 import jakarta.persistence.*;
-import lombok.AllArgsConstructor;
-import lombok.Getter;
-import lombok.NoArgsConstructor;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Entity
 @Getter
@@ -14,23 +12,20 @@ import java.time.LocalDateTime;
 @NoArgsConstructor
 @AllArgsConstructor
 @Table(name = "refresh_tokens")
+@Builder
 public class RefreshToken {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    @GeneratedValue
+    private UUID id;
 
-    @ManyToOne
-    @JoinColumn(name = "user_id", nullable = false)
-    private User user;
-
-    @Column(nullable = false, unique = true)
+    @Column(nullable = false, unique = true, length = 255)
     private String token;
 
+    @Column(name = "created_at")
     private LocalDateTime createdAt = LocalDateTime.now();
 
-    public RefreshToken(User user, String token) {
-        this.user = user;
+    public RefreshToken(String token) {
         this.token = token;
         this.createdAt = LocalDateTime.now();
     }

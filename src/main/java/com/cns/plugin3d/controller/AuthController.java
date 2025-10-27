@@ -17,17 +17,12 @@ public class AuthController {
     private final JwtUtil jwtUtil;
 
     @PostMapping("/login")
-    public LoginResponse login(@RequestBody LoginRequest request) {
+    public LoginResponse login(@Valid @RequestBody LoginRequest request) {
         return authService.login(request);
     }
 
-    @PostMapping("/register")
-    public LoginResponse register(@RequestBody RegisterRequest request) {
-        return authService.register(request);
-    }
-
     @PostMapping("/refresh")
-    public LoginResponse refresh(@RequestBody RefreshRequest request) {
+    public LoginResponse refresh(@Valid @RequestBody RefreshRequest request) {
         return authService.refreshToken(request);
     }
 
@@ -37,10 +32,12 @@ public class AuthController {
         String email = jwtUtil.extractEmail(token);
         return authService.getMe(email);
     }
+
     @PutMapping("/update-password")
     @PreAuthorize("isAuthenticated()")
     public CustomResponse updatePassword(@Valid @RequestBody UpdatePasswordRequest request, Authentication authentication) {
         String email = authentication.getName();
         return authService.updatePassword(email, request.getOldPassword(), request.getNewPassword());
     }
+
 }

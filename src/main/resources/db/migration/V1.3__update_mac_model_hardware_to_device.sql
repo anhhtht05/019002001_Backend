@@ -1,0 +1,4 @@
+ALTER TABLE devices
+ALTER COLUMN mac_address SET NOT NULL,
+ALTER COLUMN hardware_version SET NOT NULL,
+ALTER COLUMN model SET NOT NULL;

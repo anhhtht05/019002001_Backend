@@ -1,20 +1,13 @@
 package com.cns.plugin3d.controller;
 
-import com.cns.plugin3d.dto.PagedResponse;
-import com.cns.plugin3d.dto.UpdatePasswordRequest;
-import com.cns.plugin3d.dto.UpdateUserStateRequest;
-import com.cns.plugin3d.dto.UserDetailResponse;
-import com.cns.plugin3d.entity.User;
-import com.cns.plugin3d.enums.StateType;
+import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.service.UserService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.UUID;
 
 @RestController
 @RequiredArgsConstructor
@@ -23,24 +16,48 @@ public class UserController {
     private final UserService userService;
 
     @GetMapping
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public PagedResponse<UserDetailResponse> getUsers(
             @RequestParam(required = false) Integer page,
             @RequestParam(required = false) Integer limit,
             @RequestParam(name = "role", required = false) String role,
-            @RequestParam(name = "state", required = false) String state
+            @RequestParam(name = "state", required = false) String state,
+            @RequestParam(name = "search", required = false) String search
     ) {
-        return userService.getUsers(page, limit, role, state);
+        return userService.getUsers(page, limit, role, state, search);
+    }
+
+    @PostMapping("/add")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public CustomResponse addUser(@Valid @RequestBody AddUserRequest request) {
+        return userService.addUser(request);
     }
 
     @PutMapping("/{userId}")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN')")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public UserDetailResponse updateUser(
-            @PathVariable Long userId,
-            @RequestBody UpdateUserStateRequest request
+            @PathVariable UUID userId,
+            @Valid @RequestBody UpdateUserRequest request
     ) {
         return userService.updateUser(userId, request);
     }
 
+    @PutMapping("/{userId}/state")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public UserDetailResponse updateState(
+            @PathVariable UUID userId,
+            @RequestParam("state") String state
+    ) {
+        return userService.updateState(userId, state);
+    }
+
+    @PutMapping("/{userId}/role")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public UserDetailResponse updateRole(
+            @PathVariable UUID userId,
+            @RequestParam("role") String role
+    ) {
+        return userService.updateRole(userId, role);
+    }
 
 }
