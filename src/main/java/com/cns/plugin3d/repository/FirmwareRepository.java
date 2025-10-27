@@ -1,8 +1,6 @@
 package com.cns.plugin3d.repository;
 
 import com.cns.plugin3d.entity.Firmware;
-import com.cns.plugin3d.enums.StatusFirmwareType;
-import com.cns.plugin3d.enums.StatusType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;

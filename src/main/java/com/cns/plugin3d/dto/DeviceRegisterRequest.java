@@ -1,6 +1,7 @@
 package com.cns.plugin3d.dto;
 
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import lombok.Data;
 
 @Data
@@ -18,13 +19,15 @@ public class DeviceRegisterRequest {
     @NotBlank(message = "Hardware Version is required")
     private String hardwareVersion;
 
-    @NotBlank(message = "Serial Number is required")
     private String serialNumber;
 
     @NotBlank(message = "Mac Address is required")
+    @Pattern(
+            regexp = "^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$",
+            message = "Invalid MAC address format"
+    )
     private String macAddress;
 
-    @NotBlank(message = "Manufacturer is required")
     private String manufacturer;
 
     @NotBlank(message = "Model is required")

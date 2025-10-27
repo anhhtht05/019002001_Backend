@@ -52,7 +52,7 @@ public class SecurityConfig {
         http.csrf(csrf -> csrf.disable())
                 .cors(cors -> {})
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("api/auth/login","api/v1/firmware/device/download").permitAll()
+                        .requestMatchers("api/auth/login","api/v1/firmware/device/download","/api/auth/refresh").permitAll()
                         .anyRequest().authenticated()
                 )
                 .authenticationProvider(authProvider())

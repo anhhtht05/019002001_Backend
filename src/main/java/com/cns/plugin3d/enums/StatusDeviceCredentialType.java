@@ -1,6 +1,6 @@
 package com.cns.plugin3d.enums;
 
-public enum StatusType {
+public enum StatusDeviceCredentialType {
     ACTIVE,
     INACTIVE
 }

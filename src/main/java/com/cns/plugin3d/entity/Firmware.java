@@ -1,14 +1,11 @@
 package com.cns.plugin3d.entity;
 
-import com.cns.plugin3d.enums.StateType;
 import com.cns.plugin3d.enums.StatusFirmwareType;
-import com.cns.plugin3d.enums.StatusType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Where;
 
 import java.time.LocalDateTime;
 import java.util.UUID;

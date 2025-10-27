@@ -5,7 +5,7 @@ import com.cns.plugin3d.entity.Device;
 import com.cns.plugin3d.entity.DeviceCredential;
 import com.cns.plugin3d.entity.DeviceStatusHistory;
 import com.cns.plugin3d.enums.StatusDeviceType;
-import com.cns.plugin3d.enums.StatusType;
+import com.cns.plugin3d.enums.StatusDeviceCredentialType;
 import com.cns.plugin3d.exception.DeviceException;
 import com.cns.plugin3d.helper.PagedResponseHelper;
 import com.cns.plugin3d.repository.DeviceCredentialsRepository;
@@ -18,12 +18,9 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
-import org.springframework.core.env.Environment;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
-import java.util.List;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -91,7 +88,7 @@ public class DeviceService {
                 .deviceId(device.getId())
                 .apiKey(apiKey)
                 .secretKey(null)
-                .status(StatusType.ACTIVE)
+                .status(StatusDeviceCredentialType.ACTIVE)
                 .createdAt(LocalDateTime.now())
                 .expiresAt(expiresAt)
                 .build();
@@ -155,6 +152,7 @@ public class DeviceService {
         Device deviceUpdate = deviceRepository.save(device);
 
         DeviceResponse data = DeviceResponse.builder()
+                .id(deviceUpdate.getId().toString())
                 .deviceId(deviceUpdate.getDeviceId())
                 .deviceName(deviceUpdate.getDeviceName())
                 .deviceType(deviceUpdate.getDeviceType())

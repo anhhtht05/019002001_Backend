@@ -1,7 +1,6 @@
 package com.cns.plugin3d.entity;
 
-import com.cns.plugin3d.enums.StateType;
-import com.cns.plugin3d.enums.StatusType;
+import com.cns.plugin3d.enums.StatusDeviceCredentialType;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -33,7 +32,7 @@ public class DeviceCredential {
 
     @Enumerated(EnumType.STRING)
     @Column(length = 20)
-    private StatusType status = StatusType.ACTIVE;
+    private StatusDeviceCredentialType status = StatusDeviceCredentialType.ACTIVE;
 
     @Column(name = "created_at")
     private LocalDateTime createdAt;

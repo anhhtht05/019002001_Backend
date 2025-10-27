@@ -15,7 +15,4 @@ public class UpdateUserRequest {
     @Email(message = "Invalid email")
     @NotBlank(message = "Email is required")
     private String email;
-
-    private StateType state;
-    private RoleType role;
 }

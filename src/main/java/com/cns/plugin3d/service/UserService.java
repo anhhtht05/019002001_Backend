@@ -59,11 +59,30 @@ public class UserService {
         if (request.getEmail() != null && !request.getEmail().isBlank()) {
             user.setEmail(request.getEmail());
         }
-        if (request.getState() != null) {
-            user.setState(request.getState());
+
+        userRepository.save(user);
+
+        return UserDetailResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .state(user.getState().name())
+                .build();
+    }
+
+    public UserDetailResponse updateState(UUID userId, String state) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException("USER_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        if (state == null || state.isBlank()) {
+            throw new CustomException("INVALID_STATE", HttpStatus.BAD_REQUEST);
         }
-        if (request.getRole() != null) {
-            user.setRole(request.getRole());
+
+        try {
+            user.setState(StateType.valueOf(state.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new CustomException("INVALID_STATE", HttpStatus.BAD_REQUEST);
         }
 
         userRepository.save(user);
@@ -76,6 +95,32 @@ public class UserService {
                 .state(user.getState().name())
                 .build();
     }
+
+    public UserDetailResponse updateRole(UUID userId, String role) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new CustomException("USER_NOT_FOUND", HttpStatus.NOT_FOUND));
+
+        if (role == null || role.isBlank()) {
+            throw new CustomException("INVALID_ROLE", HttpStatus.BAD_REQUEST);
+        }
+
+        try {
+            user.setRole(RoleType.valueOf(role.toUpperCase()));
+        } catch (IllegalArgumentException e) {
+            throw new CustomException("INVALID_ROLE", HttpStatus.BAD_REQUEST);
+        }
+
+        userRepository.save(user);
+
+        return UserDetailResponse.builder()
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
+                .role(user.getRole().name())
+                .state(user.getState().name())
+                .build();
+    }
+
     public CustomResponse addUser(AddUserRequest request) {
         if (userRepository.findByEmail(request.getEmail()).isPresent()) {
             throw new CustomException("Email already exists", HttpStatus.CONFLICT);

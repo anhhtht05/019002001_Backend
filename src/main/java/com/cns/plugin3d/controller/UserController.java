@@ -42,4 +42,22 @@ public class UserController {
         return userService.updateUser(userId, request);
     }
 
+    @PutMapping("/{userId}/state")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public UserDetailResponse updateState(
+            @PathVariable UUID userId,
+            @RequestParam("state") String state
+    ) {
+        return userService.updateState(userId, state);
+    }
+
+    @PutMapping("/{userId}/role")
+    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
+    public UserDetailResponse updateRole(
+            @PathVariable UUID userId,
+            @RequestParam("role") String role
+    ) {
+        return userService.updateRole(userId, role);
+    }
+
 }

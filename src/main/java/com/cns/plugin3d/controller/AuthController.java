@@ -32,10 +32,12 @@ public class AuthController {
         String email = jwtUtil.extractEmail(token);
         return authService.getMe(email);
     }
+
     @PutMapping("/update-password")
     @PreAuthorize("isAuthenticated()")
     public CustomResponse updatePassword(@Valid @RequestBody UpdatePasswordRequest request, Authentication authentication) {
         String email = authentication.getName();
         return authService.updatePassword(email, request.getOldPassword(), request.getNewPassword());
     }
+
 }

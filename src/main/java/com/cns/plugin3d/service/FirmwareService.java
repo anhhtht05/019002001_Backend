@@ -4,7 +4,6 @@ import com.cns.plugin3d.dto.*;
 import com.cns.plugin3d.entity.*;
 import com.cns.plugin3d.enums.InstallationStatusType;
 import com.cns.plugin3d.enums.StatusFirmwareType;
-import com.cns.plugin3d.enums.StatusType;
 import com.cns.plugin3d.exception.CustomException;
 import com.cns.plugin3d.helper.PagedResponseHelper;
 import com.cns.plugin3d.repository.*;
@@ -260,7 +259,6 @@ public class FirmwareService {
             }
 
             firmware.setDescription(request.getDescription());
-            firmware.setStatus(request.getStatus());
             firmware.setUpdatedAt(LocalDateTime.now());
             firmwareRepository.save(firmware);
 
