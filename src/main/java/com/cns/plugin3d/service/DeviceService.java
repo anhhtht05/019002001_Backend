@@ -145,9 +145,9 @@ public class DeviceService {
         device.setManufacturer(request.getManufacturer());
         device.setModel(request.getModel());
         device.setUpdatedAt(LocalDateTime.now());
-        DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
-                .findLatestByDeviceIdNative(device.getId());
-        latestStatus.setStatus(request.getStatus());
+//        DeviceStatusHistory latestStatus = deviceStatusHistoryRepository
+//                .findLatestByDeviceIdNative(device.getId());
+//        latestStatus.setStatus(request.getStatus());
 
         Device deviceUpdate = deviceRepository.save(device);
 
@@ -161,7 +161,7 @@ public class DeviceService {
                 .macAddress(deviceUpdate.getMacAddress())
                 .manufacturer(deviceUpdate.getManufacturer())
                 .model(deviceUpdate.getModel())
-                .status(latestStatus != null ? latestStatus.getStatus() : StatusDeviceType.ERROR)
+//                .status(latestStatus != null ? latestStatus.getStatus() : StatusDeviceType.ERROR)
                 .build();
     return DeviceRegisterResponse.<DeviceResponse>builder()
                 .success(true)

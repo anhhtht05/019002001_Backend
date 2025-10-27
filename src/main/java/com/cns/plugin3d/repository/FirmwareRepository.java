@@ -12,6 +12,7 @@ import java.util.UUID;
 
 public interface FirmwareRepository extends JpaRepository<Firmware, UUID> {
     Optional<Firmware> findByVersion(String version);
+    
     boolean existsByVersion(String version);
 
 

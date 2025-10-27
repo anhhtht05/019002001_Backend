@@ -20,7 +20,6 @@ public class DeviceUpdateRequest {
     @NotBlank(message = "Hardware Version is required")
     private String hardwareVersion;
 
-    @NotBlank(message = "Serial Number is required")
     private String serialNumber;
 
     @NotBlank(message = "Mac Address is required")
@@ -30,11 +29,9 @@ public class DeviceUpdateRequest {
     )
     private String macAddress;
 
-    @NotBlank(message = "Manufacturer is required")
     private String manufacturer;
 
     @NotBlank(message = "Model is required")
     private String model;
 
-    private StatusDeviceType status;
 }

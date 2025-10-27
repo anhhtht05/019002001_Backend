@@ -34,15 +34,4 @@ public class FirmwareResponse<T> {
                 .build();
     }
 
-    public static <T> FirmwareResponse<T> error(String code, String message, String details) {
-        return FirmwareResponse.<T>builder()
-                .success(false)
-                .error(ApiError.builder()
-                        .code(code)
-                        .message(message)
-                        .details(details)
-                        .build())
-                .build();
-    }
-
 }

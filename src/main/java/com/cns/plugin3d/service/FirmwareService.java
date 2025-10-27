@@ -9,6 +9,7 @@ import com.cns.plugin3d.helper.PagedResponseHelper;
 import com.cns.plugin3d.repository.*;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
@@ -27,6 +28,7 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class FirmwareService {
 
     private final FirmwareRepository firmwareRepository;
@@ -42,12 +44,14 @@ public class FirmwareService {
     public FirmwareResponse<FirmwareMetadataResponse> uploadFirmwareAndSaveMetadata(FirmwareUploadRequest request) {
         try {
             if (request.getFile() == null || request.getFile().isEmpty()) {
-                return FirmwareResponse.error("EMPTY_FILE", "Firmware file cannot be empty", null);
+                throw new CustomException( "Firmware file cannot be empty", HttpStatus.BAD_REQUEST);
             }
+            System.out.println(firmwareRepository.existsByVersion(request.getVersion()));
+            System.out.println(request.getVersion());
             if (firmwareRepository.existsByVersion(request.getVersion())) {
-                return FirmwareResponse.error("VERSION_EXISTS",
-                        "Firmware version already exists: " + request.getVersion(), null);
+                throw new CustomException( "Firmware version already exists: " + request.getVersion(), HttpStatus.CONFLICT);
             }
+
             String formattedName = request.getFirmwareName()
                     .toLowerCase()
                     .replaceAll("[^a-z0-9\\s_-]", "")
@@ -70,11 +74,15 @@ public class FirmwareService {
 
             boolean exists = s3Service.exists(key);
             if (!exists) {
-                return FirmwareResponse.error("UPLOAD_FAILED",
-                        "File not found on S3 after upload", null);
+                throw new CustomException("File not found on S3 after upload", HttpStatus.INTERNAL_SERVER_ERROR);
             }
 
-            String checksum = calculateSHA256(request.getFile());
+            String checksum;
+            try {
+                checksum = calculateSHA256(request.getFile());
+            } catch (Exception e) {
+                throw new CustomException("Failed to calculate checksum: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
+            }
 
             Firmware firmware = new Firmware();
             firmware.setName(request.getFirmwareName());
@@ -116,9 +124,8 @@ public class FirmwareService {
                     .build();
 
             return FirmwareResponse.success(metadata, "Firmware uploaded and saved successfully");
-
         } catch (Exception e) {
-            return FirmwareResponse.error("UPLOAD_ERROR", "Failed to upload firmware", e.getMessage());
+            throw new CustomException("Failed to upload firmware", HttpStatus.BAD_REQUEST);
         }
     }
 
@@ -152,26 +159,20 @@ public class FirmwareService {
             String newVersion = firmware.getVersion();
 
             if (compareFirmwareVersions(newVersion, lastVersion) <= 0) {
-                return FirmwareResponse.error(
-                        "ALREADY_UP_TO_DATE",
-                        "Device already has the latest firmware version (" + lastVersion + ")",
-                        "Device already has the latest firmware version (" + lastVersion + ")"
-                );
+                throw new CustomException("Device already has the latest firmware version (" + lastVersion + ")", HttpStatus.NOT_MODIFIED);
             }
         }
 
         String fileKey = firmware.getFilePath();
 
         if (!s3Service.exists(fileKey)) {
-            return FirmwareResponse.error("FILE_NOT_FOUND",
-                    "Firmware file not found on S3", null);
+            throw new CustomException("Firmware file not found on S3", HttpStatus.NOT_FOUND);
         }
 
         if (firmware.getChecksum() != null && !firmware.getChecksum().isBlank()) {
             boolean valid = s3Service.verifyFileChecksum(fileKey, firmware.getChecksum());
             if (!valid) {
-                return FirmwareResponse.error("CHECKSUM_MISMATCH",
-                        "Firmware checksum mismatch", null);
+                throw new CustomException("Firmware checksum mismatch", HttpStatus.CONFLICT);
             }
         }
 
@@ -235,27 +236,22 @@ public class FirmwareService {
 
     @Transactional
     public FirmwareResponse<FirmwareMetadataResponse> updateFirmware(String firmwareId, FirmwareUpdateRequest request) {
-        try {
             UUID id;
             try {
                 id = UUID.fromString(firmwareId);
             } catch (IllegalArgumentException e) {
-                return FirmwareResponse.error("INVALID_ID", "Invalid firmware ID format", null);
+                throw new CustomException("Invalid firmware ID format", HttpStatus.BAD_REQUEST);
             }
 
             Firmware firmware = firmwareRepository.findById(id)
-                    .orElse(null);
+                    .orElseThrow(() -> new CustomException("Firmware not found", HttpStatus.NOT_FOUND));
 
             if (firmware == null) {
-                return FirmwareResponse.error("NOT_FOUND", "Firmware not found", null);
+                throw new CustomException("Firmware not found", HttpStatus.NOT_FOUND);
             }
 
             if (firmware.getStatus() != StatusFirmwareType.DRAFT) {
-                return FirmwareResponse.error(
-                        "UPDATE_FORBIDDEN",
-                        "Only firmware in DRAFT state can be updated",
-                        null
-                );
+                throw new CustomException("Only firmware in DRAFT state can be updated", HttpStatus.CONFLICT);
             }
 
             firmware.setDescription(request.getDescription());
@@ -303,27 +299,22 @@ public class FirmwareService {
                     .build();
 
             return FirmwareResponse.success(metadata, "Firmware uploaded and saved successfully");
-
-        } catch (Exception e) {
-            return FirmwareResponse.error("UPDATE_ERROR", "Failed to update firmware", e.getMessage());
-        }
     }
 
     @Transactional
     public FirmwareResponse<FirmwareMetadataResponse> updateFirmwareStatus(String firmwareId, String status) {
-        try {
             UUID id;
             try {
                 id = UUID.fromString(firmwareId);
             } catch (IllegalArgumentException e) {
-                return FirmwareResponse.error("INVALID_ID", "Invalid firmware ID format", "Firmware not found");
+                throw new CustomException("Invalid firmware ID format", HttpStatus.BAD_REQUEST);
             }
 
             Firmware firmware = firmwareRepository.findById(id)
                     .orElse(null);
 
             if (firmware == null) {
-                return FirmwareResponse.error("NOT_FOUND", "Firmware not found","Firmware not found");
+                throw new CustomException("Firmware not found", HttpStatus.NOT_FOUND);
             }
 
             StatusFirmwareType currentStatus = firmware.getStatus();
@@ -332,11 +323,7 @@ public class FirmwareService {
             try {
                 newStatus = StatusFirmwareType.valueOf(status.toUpperCase());
             } catch (IllegalArgumentException e) {
-                return FirmwareResponse.error(
-                        "INVALID_STATUS",
-                        "Status must be a valid enum value",
-                        "Status must be a valid enum value"
-                );
+                throw new CustomException("Status must be a valid enum value", HttpStatus.BAD_REQUEST);
             }
 
             boolean allowed = switch (currentStatus) {
@@ -347,11 +334,7 @@ public class FirmwareService {
             };
 
             if (!allowed) {
-                return FirmwareResponse.error(
-                        "INVALID_TRANSITION",
-                        String.format("Cannot change firmware from %s to %s", currentStatus, newStatus),
-                        String.format("Cannot change firmware from %s to %s", currentStatus, newStatus)
-                );
+                throw new CustomException( String.format("Cannot change firmware from %s to %s", currentStatus, newStatus), HttpStatus.CONFLICT );
             }
 
             firmware.setStatus(newStatus);
@@ -372,35 +355,28 @@ public class FirmwareService {
 
             return FirmwareResponse.success(metadata,
                     String.format("Firmware status updated from %s to %s", currentStatus, newStatus));
-
-        } catch (Exception e) {
-            return FirmwareResponse.error("UPDATE_STATUS_ERROR", "Failed to update firmware status", e.getMessage());
-        }
     }
 
 
     @Transactional
     public FirmwareResponse deleteFirmware(String firmwareId) {
-        try {
-            UUID id = UUID.fromString(firmwareId);
+            UUID id;
+            try {
+                id = UUID.fromString(firmwareId);
+            } catch (IllegalArgumentException e) {
+                throw new CustomException("Invalid firmware ID format", HttpStatus.BAD_REQUEST);
+            }
             Firmware firmware = firmwareRepository.findById(id)
                     .orElse(null);
 
             if (firmware == null) {
-                return FirmwareResponse.error(
-                        "NOT_FOUND",
-                        "Firmware not found",
-                        "Firmware not found"
-                );
+                throw new CustomException("Firmware not found", HttpStatus.NOT_FOUND);
+
             }
 
-            if (firmware.getStatus() != StatusFirmwareType.DRAFT) {
-                return FirmwareResponse.error(
-                        "DELETE_FORBIDDEN",
-                        "Only firmware in DRAFT state can be deleted",
-                        "Only firmware in DRAFT state can be deleted"
-                );
-            }
+        if (firmware.getStatus() != StatusFirmwareType.DRAFT) {
+            throw new CustomException("Only firmware in DRAFT state can be deleted", HttpStatus.CONFLICT);
+        }
 
 //            firmwareModelCompatibilityRepository.deleteByFirmwareId(firmware.getId());
 //            firmwareHardwareCompatibilityRepository.deleteByFirmwareId(firmware.getId());
@@ -411,27 +387,13 @@ public class FirmwareService {
                 try {
                     s3Service.deleteFile(firmware.getFilePath());
                 } catch (Exception e) {
-                    e.printStackTrace();
+                    throw new CustomException("Failed to delete firmware file from S3: " + e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR);
                 }
             }
 
             firmwareRepository.delete(firmware);
 
             return FirmwareResponse.success(null, "Firmware deleted successfully");
-
-        } catch (IllegalArgumentException e) {
-            return FirmwareResponse.error(
-                    "INVALID_ID",
-                    "Invalid firmware ID format",
-                    e.getMessage()
-            );
-        } catch (Exception e) {
-            return FirmwareResponse.error(
-                    "DELETE_FAILED",
-                    "Failed to delete firmware",
-                    e.getMessage()
-            );
-        }
     }
 
     private String calculateSHA256(MultipartFile file) throws Exception {

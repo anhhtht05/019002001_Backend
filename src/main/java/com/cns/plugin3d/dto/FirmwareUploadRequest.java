@@ -18,7 +18,6 @@ public class FirmwareUploadRequest {
     @Pattern(regexp = "^(v)\\d+(\\.\\d+){1,2}$", message = "Invalid version format (v1.0.0)")
     private String version;
 
-    @NotBlank(message = "Description is required")
     private String description;
 
     @NotNull(message = "Model compatibility is required")
