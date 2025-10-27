@@ -28,7 +28,6 @@ public class UserController {
     }
 
     @PostMapping("/add")
-    @PreAuthorize("hasAnyAuthority('ROLE_ADMIN', 'ROLE_SUPER_ADMIN')")
     public CustomResponse addUser(@Valid @RequestBody AddUserRequest request) {
         return userService.addUser(request);
     }
